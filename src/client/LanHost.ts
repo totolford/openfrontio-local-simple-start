@@ -3,7 +3,9 @@ import { GAME_ID_REGEX } from "../core/Schemas";
 export const LAN_HOST_ORIGIN_KEY = "openfront_host_origin";
 const RUNTIME_PUBLIC_ORIGIN_PATH = "/runtime/public-origin.txt";
 const RUNTIME_ORIGIN_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+const RUNTIME_ORIGIN_NULL_RETRY_MS = 2000;
 let cachedRuntimeOrigin: string | null | undefined;
+let cachedRuntimeOriginFetchedAt = 0;
 let cachedPublicIpOrigin: string | null | undefined;
 
 export function normalizeHostOrigin(raw: string): string | null {
@@ -112,7 +114,12 @@ export function setSavedHostOrigin(raw: string): string | null {
 }
 
 export async function getRuntimePublicOrigin(): Promise<string | null> {
-  if (cachedRuntimeOrigin !== undefined) {
+  const now = Date.now();
+  if (
+    cachedRuntimeOrigin !== undefined &&
+    (cachedRuntimeOrigin !== null ||
+      now - cachedRuntimeOriginFetchedAt < RUNTIME_ORIGIN_NULL_RETRY_MS)
+  ) {
     return cachedRuntimeOrigin;
   }
 
@@ -125,11 +132,13 @@ export async function getRuntimePublicOrigin(): Promise<string | null> {
     );
     if (!response.ok) {
       cachedRuntimeOrigin = null;
+      cachedRuntimeOriginFetchedAt = Date.now();
       return cachedRuntimeOrigin;
     }
     const raw = (await response.text()).trim();
     if (!raw) {
       cachedRuntimeOrigin = null;
+      cachedRuntimeOriginFetchedAt = Date.now();
       return cachedRuntimeOrigin;
     }
 
@@ -151,9 +160,11 @@ export async function getRuntimePublicOrigin(): Promise<string | null> {
     }
 
     cachedRuntimeOrigin = parsedOrigin;
+    cachedRuntimeOriginFetchedAt = Date.now();
     return cachedRuntimeOrigin;
   } catch {
     cachedRuntimeOrigin = null;
+    cachedRuntimeOriginFetchedAt = Date.now();
     return cachedRuntimeOrigin;
   }
 }

@@ -27,10 +27,10 @@ echo [OpenFront] Demarrage du jeu en mode PUBLIC (sans configuration admin)...
 if defined LAN_IP (
   echo [OpenFront] Local:  http://localhost:9000
   echo [OpenFront] LAN:    http://%LAN_IP%:9000
-  echo [OpenFront] Public: une URL https://*.trycloudflare.com (ou https://*.loca.lt) sera affichee dans la console.
+  echo [OpenFront] Public: une URL https://*.trycloudflare.com ^(ou https://*.loca.lt^) sera affichee dans la console.
 ) else (
   echo [OpenFront] IP LAN non detectee automatiquement.
-  echo [OpenFront] Public: une URL https://*.trycloudflare.com (ou https://*.loca.lt) sera affichee dans la console.
+  echo [OpenFront] Public: une URL https://*.trycloudflare.com ^(ou https://*.loca.lt^) sera affichee dans la console.
 )
 call npm run dev:public
 

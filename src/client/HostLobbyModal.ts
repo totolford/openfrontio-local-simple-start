@@ -92,6 +92,7 @@ export class HostLobbyModal extends BaseModal {
   @property({ attribute: false }) eventBus: EventBus | null = null;
   // Add a new timer for debouncing bot changes
   private botsUpdateTimer: number | null = null;
+  private hostAddressSyncInterval: number | null = null;
   private mapLoader = terrainMapFileLoader;
 
   private leaveLobbyOnClose = true;
@@ -566,6 +567,7 @@ export class HostLobbyModal extends BaseModal {
     this.showConfigMenu = this.openConfigMenuOnOpen;
     this.openConfigMenuOnOpen = false;
     this.startLobbyUpdates();
+    this.startHostAddressSync();
     void this.refreshHostAddress();
     this.syncGroupUsernameFromLocal();
 
@@ -632,6 +634,7 @@ export class HostLobbyModal extends BaseModal {
   protected onClose(): void {
     console.log("Closing host lobby modal");
     this.stopLobbyUpdates();
+    this.stopHostAddressSync();
     if (this.leaveLobbyOnClose) {
       this.leaveLobby();
       this.updateHistory("/"); // Reset URL to base
@@ -1076,10 +1079,10 @@ export class HostLobbyModal extends BaseModal {
     }
 
     const config = await getServerConfigFromClient();
+    const runtimeOrigin = await getRuntimePublicOrigin();
     const normalizedInput = normalizeHostOrigin(this.hostAddressInput);
-    const preferred = normalizedInput ?? (await getRuntimePublicOrigin());
     const fallback = normalizeHostOrigin(window.location.origin);
-    const origin = preferred ?? fallback;
+    const origin = runtimeOrigin ?? normalizedInput ?? fallback;
     if (!origin) {
       return;
     }
@@ -1090,6 +1093,24 @@ export class HostLobbyModal extends BaseModal {
 
     this.hostAddressInput = origin;
     this.groupJoinUrl = `${origin}/${config.workerPath(currentLobbyId)}/game/${currentLobbyId}`;
+  }
+
+  private startHostAddressSync() {
+    this.stopHostAddressSync();
+    this.hostAddressSyncInterval = window.setInterval(() => {
+      if (!this.isModalOpen || !this.lobbyId) {
+        return;
+      }
+      void this.refreshGroupJoinUrl();
+    }, 2000);
+  }
+
+  private stopHostAddressSync() {
+    if (this.hostAddressSyncInterval === null) {
+      return;
+    }
+    clearInterval(this.hostAddressSyncInterval);
+    this.hostAddressSyncInterval = null;
   }
 
   private async copyGroupAddress() {
