@@ -25,10 +25,16 @@ import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
 import "./components/CopyButton";
 import "./components/GameConfigSettings";
+import "./components/GroupLobbyRoster";
 import "./components/LobbyPlayerView";
 import "./components/ToggleInputCard";
 import { modalHeader } from "./components/ui/ModalHeader";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
+import { JoinIpModal } from "./JoinIpModal";
+import {
+  getBestHostInput,
+  setSavedHostOrigin,
+} from "./LanHost";
 import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import {
@@ -75,7 +81,10 @@ export class HostLobbyModal extends BaseModal {
   @state() private useRandomMap: boolean = false;
   @state() private disabledUnits: UnitType[] = [];
   @state() private lobbyCreatorClientID: string = "";
+  @state() private currentClientID: string = "";
   @state() private nationCount: number = 0;
+  @state() private hostAddressInput: string = "";
+  @state() private showConfigMenu: boolean = false;
 
   @property({ attribute: false }) eventBus: EventBus | null = null;
   // Add a new timer for debouncing bot changes
@@ -89,6 +98,7 @@ export class HostLobbyModal extends BaseModal {
     if (!this.lobbyId || lobby.gameID !== this.lobbyId) {
       return;
     }
+    this.currentClientID = event.myClientID;
     this.lobbyCreatorClientID = lobby.lobbyCreatorClientID ?? "";
     if (lobby.clients) {
       this.clients = lobby.clients;
@@ -141,6 +151,104 @@ export class HostLobbyModal extends BaseModal {
   }
 
   render() {
+    return this.showConfigMenu
+      ? this.renderConfigMenu()
+      : this.renderGroupMenu();
+  }
+
+  private renderGroupMenu() {
+    const content = html`
+      <div class="${this.modalContainerClass}">
+        ${modalHeader({
+          title: "Groupe",
+          onBack: () => {
+            this.leaveLobbyOnClose = true;
+            this.close();
+          },
+          ariaLabel: translateText("common.back"),
+          rightContent: html`
+            <copy-button
+              .lobbyId=${this.lobbyId}
+              .lobbySuffix=${this.lobbyUrlSuffix}
+              include-lobby-query
+            ></copy-button>
+          `,
+        })}
+
+        <div
+          class="flex-1 overflow-y-auto custom-scrollbar p-6 mr-1 mx-auto w-full max-w-5xl space-y-6"
+        >
+          <div class="p-4 rounded-xl border border-white/10 bg-black/20">
+            <div
+              class="text-xs font-bold uppercase tracking-widest text-white/60 mb-2"
+            >
+              Connexion par IP
+            </div>
+            <div class="flex flex-col gap-3">
+              <input
+                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                .value=${this.hostAddressInput}
+                @input=${(e: Event) =>
+                  (this.hostAddressInput = (e.target as HTMLInputElement).value)}
+                placeholder="192.168.1.42:9000"
+              />
+              <div class="flex flex-wrap gap-2">
+                <button
+                  class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                  @click=${this.saveHostAddress}
+                >
+                  Sauvegarder l'IP
+                </button>
+                <button
+                  class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 text-white transition-colors border border-white/10"
+                  @click=${this.openJoinIpModal}
+                >
+                  Rejoindre par IP
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <group-lobby-roster
+            .clients=${this.clients}
+            .lobbyCreatorClientID=${this.lobbyCreatorClientID}
+            .currentClientID=${this.currentClientID}
+          ></group-lobby-roster>
+        </div>
+
+        <div
+          class="p-6 pt-4 border-t border-white/10 bg-black/20 shrink-0 flex justify-end"
+        >
+          <button
+            class="min-w-[220px] py-4 px-6 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none"
+            @click=${() => {
+              this.showConfigMenu = true;
+            }}
+            ?disabled=${!this.lobbyId}
+          >
+            Configurer la partie
+          </button>
+        </div>
+      </div>
+    `;
+
+    if (this.inline) {
+      return content;
+    }
+
+    return html`
+      <o-modal
+        title=""
+        ?hideCloseButton=${true}
+        ?inline=${this.inline}
+        hideHeader
+      >
+        ${content}
+      </o-modal>
+    `;
+  }
+
+  private renderConfigMenu() {
     const inputCards = [
       html`<toggle-input-card
         .labelKey=${"host_modal.max_timer"}
@@ -211,12 +319,10 @@ export class HostLobbyModal extends BaseModal {
 
     const content = html`
       <div class="${this.modalContainerClass}">
-        <!-- Header -->
         ${modalHeader({
-          title: translateText("host_modal.title"),
+          title: "Configuration de partie",
           onBack: () => {
-            this.leaveLobbyOnClose = true;
-            this.close();
+            this.showConfigMenu = false;
           },
           ariaLabel: translateText("common.back"),
           rightContent: html`
@@ -231,6 +337,35 @@ export class HostLobbyModal extends BaseModal {
         <div
           class="flex-1 overflow-y-auto custom-scrollbar p-6 mr-1 mx-auto w-full max-w-5xl"
         >
+          <div class="mb-6 p-4 rounded-xl border border-white/10 bg-black/20">
+            <div class="text-xs font-bold uppercase tracking-widest text-white/60 mb-2">
+              Connexion par IP
+            </div>
+            <div class="flex flex-col gap-3">
+              <input
+                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                .value=${this.hostAddressInput}
+                @input=${(e: Event) =>
+                  (this.hostAddressInput = (e.target as HTMLInputElement).value)}
+                placeholder="192.168.1.42:9000"
+              />
+              <div class="flex flex-wrap gap-2">
+                <button
+                  class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+                  @click=${this.saveHostAddress}
+                >
+                  Sauvegarder l'IP
+                </button>
+                <button
+                  class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 text-white transition-colors border border-white/10"
+                  @click=${this.openJoinIpModal}
+                >
+                  Rejoindre par IP
+                </button>
+              </div>
+            </div>
+          </div>
+
           <game-config-settings
             class="block"
             .sectionGapClass=${"space-y-10"}
@@ -316,7 +451,7 @@ export class HostLobbyModal extends BaseModal {
             .gameMode=${this.gameMode}
             .clients=${this.clients}
             .lobbyCreatorClientID=${this.lobbyCreatorClientID}
-            .currentClientID=${this.lobbyCreatorClientID}
+            .currentClientID=${this.currentClientID}
             .teamCount=${this.teamCount}
             .nationCount=${this.nationCount}
             .disableNations=${this.disableNations}
@@ -357,7 +492,10 @@ export class HostLobbyModal extends BaseModal {
   }
 
   protected onOpen(): void {
+    this.showConfigMenu = false;
+    this.currentClientID = "";
     this.startLobbyUpdates();
+    void this.populateDefaultHost();
     this.lobbyId = generateID();
     // Note: clientID will be assigned by server when we join the lobby
     // lobbyCreatorClientID stays empty until then
@@ -444,11 +582,14 @@ export class HostLobbyModal extends BaseModal {
     this.lobbyId = "";
     this.clients = [];
     this.lobbyCreatorClientID = "";
+    this.currentClientID = "";
     this.nationCount = 0;
+    this.hostAddressInput = "";
     this.goldMultiplier = false;
     this.goldMultiplierValue = undefined;
     this.startingGold = false;
     this.startingGoldValue = undefined;
+    this.showConfigMenu = false;
 
     this.leaveLobbyOnClose = true;
   }
@@ -832,6 +973,40 @@ export class HostLobbyModal extends BaseModal {
         this.nationCount = 0;
       }
     }
+  }
+
+  private saveHostAddress = () => {
+    const saved = setSavedHostOrigin(this.hostAddressInput);
+    if (!saved) {
+      window.dispatchEvent(
+        new CustomEvent("show-message", {
+          detail: {
+            message: "IP invalide",
+            color: "red",
+            duration: 2500,
+          },
+        }),
+      );
+      return;
+    }
+    this.hostAddressInput = saved;
+    window.dispatchEvent(
+      new CustomEvent("show-message", {
+        detail: {
+          message: `IP sauvegardée: ${saved}`,
+          color: "green",
+          duration: 2000,
+        },
+      }),
+    );
+  };
+
+  private openJoinIpModal = () => {
+    (document.querySelector("join-ip-modal") as JoinIpModal)?.open();
+  };
+
+  private async populateDefaultHost() {
+    this.hostAddressInput = await getBestHostInput();
   }
 }
 

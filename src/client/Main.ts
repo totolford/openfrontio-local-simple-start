@@ -13,8 +13,6 @@ import { getServerConfigFromClient } from "../core/configuration/ConfigLoader";
 import { GameType } from "../core/game/Game";
 import { UserSettings } from "../core/game/UserSettings";
 import "./AccountModal";
-import { getUserMe } from "./Api";
-import { userAuth } from "./Auth";
 import { joinLobby } from "./ClientGameRunner";
 import { getPlayerCosmeticsRefs } from "./Cosmetics";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
@@ -30,6 +28,7 @@ import "./GoogleAdElement";
 import { GutterAds } from "./GutterAds";
 import { HelpModal } from "./HelpModal";
 import { HostLobbyModal as HostPrivateLobbyModal } from "./HostLobbyModal";
+import "./JoinIpModal";
 import { JoinLobbyModal } from "./JoinLobbyModal";
 import "./LangSelector";
 import { LangSelector } from "./LangSelector";
@@ -464,14 +463,8 @@ class Client {
       }
     };
 
-    if ((await userAuth()) === false) {
-      // Not logged in
-      onUserMe(false);
-    } else {
-      // JWT appears to be valid
-      // TODO: Add caching
-      getUserMe().then(onUserMe);
-    }
+    // Local/offline mode: disable account login requirements.
+    onUserMe(false);
 
     const settingsModal = document.querySelector(
       "user-setting",

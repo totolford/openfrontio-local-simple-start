@@ -23,15 +23,16 @@ if not exist "node_modules" (
 set "LAN_IP="
 for /f %%i in ('powershell -NoProfile -Command "(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.IPAddress -notlike '169.254*' } | Select-Object -First 1 -ExpandProperty IPAddress)"') do set "LAN_IP=%%i"
 
-echo [OpenFront] Demarrage du jeu en mode LAN...
+echo [OpenFront] Demarrage du jeu en mode PUBLIC (sans configuration admin)...
 if defined LAN_IP (
-  echo [OpenFront] Toi:    http://localhost:9000
-  echo [OpenFront] Ami(s): http://%LAN_IP%:9000
-  echo [OpenFront] Ouvre le jeu via l'adresse LAN pour partager un lien d'invitation correct.
+  echo [OpenFront] Local:  http://localhost:9000
+  echo [OpenFront] LAN:    http://%LAN_IP%:9000
+  echo [OpenFront] Public: une URL https://*.loca.lt sera affichee dans la console.
 ) else (
-  echo [OpenFront] IP LAN non detectee automatiquement. Utilise l'IP locale de ton PC.
+  echo [OpenFront] IP LAN non detectee automatiquement.
+  echo [OpenFront] Public: une URL https://*.loca.lt sera affichee dans la console.
 )
-call npm run dev:lan
+call npm run dev:public
 
 echo [OpenFront] Le serveur s'est arrete.
 pause

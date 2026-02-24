@@ -825,6 +825,7 @@ export class GameServer {
       clients: this.activeClients.map((c) => ({
         username: c.username,
         clientID: c.clientID,
+        flag: c.cosmetics?.flag,
       })),
       lobbyCreatorClientID: this.lobbyCreatorID,
       gameConfig: this.gameConfig,

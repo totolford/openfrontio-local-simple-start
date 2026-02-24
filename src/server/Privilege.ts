@@ -119,6 +119,8 @@ export interface PrivilegeChecker {
 
 export class PrivilegeCheckerImpl implements PrivilegeChecker {
   private matcher: RegExpMatcher;
+  private readonly unlockAllCosmetics: boolean =
+    process.env.UNLOCK_ALL_SKINS === "true" || process.env.GAME_ENV === "dev";
 
   constructor(
     private cosmetics: Cosmetics,
@@ -179,6 +181,14 @@ export class PrivilegeCheckerImpl implements PrivilegeChecker {
 
     const colorPalette = this.cosmetics.colorPalettes?.[colorPaletteName ?? ""];
 
+    if (this.unlockAllCosmetics) {
+      return {
+        name: found.name,
+        patternData: found.pattern,
+        colorPalette,
+      } satisfies PlayerPattern;
+    }
+
     if (flares.includes("pattern:*")) {
       return {
         name: found.name,
@@ -204,6 +214,10 @@ export class PrivilegeCheckerImpl implements PrivilegeChecker {
   }
 
   isColorAllowed(flares: string[], color: string): PlayerColor {
+    if (this.unlockAllCosmetics) {
+      return { color };
+    }
+
     const allowedColors = flares
       .filter((flare) => flare.startsWith("color:"))
       .map((flare) => flare.split(":")[1]);

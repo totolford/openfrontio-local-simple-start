@@ -13,7 +13,7 @@ export class PlayPage extends LitElement {
         id="page-play"
         class="flex flex-col gap-2 w-full lg:max-w-6xl mx-auto px-0 lg:px-4 lg:my-auto min-h-0"
       >
-        <token-login class="absolute"></token-login>
+        <token-login class="absolute hidden"></token-login>
 
         <!-- Mobile: Fixed top bar -->
         <div

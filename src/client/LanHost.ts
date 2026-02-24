@@ -1,0 +1,127 @@
+import { GAME_ID_REGEX } from "../core/Schemas";
+
+export const LAN_HOST_ORIGIN_KEY = "openfront_host_origin";
+const RUNTIME_PUBLIC_ORIGIN_PATH = "/runtime/public-origin.txt";
+const RUNTIME_ORIGIN_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+let cachedRuntimeOrigin: string | null | undefined;
+
+export function normalizeHostOrigin(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+
+  const withProtocol =
+    value.startsWith("http://") || value.startsWith("https://")
+      ? value
+      : `http://${value}`;
+
+  try {
+    const url = new URL(withProtocol);
+    const protocol = url.protocol === "https:" ? "https:" : "http:";
+    const hostname = url.hostname;
+    if (!hostname) return null;
+    const port = url.port || "9000";
+    return `${protocol}//${hostname}:${port}`;
+  } catch {
+    return null;
+  }
+}
+
+export function defaultHostInput(): string {
+  const host = window.location.hostname || "localhost";
+  const port = window.location.port || "9000";
+  return `${host}:${port}`;
+}
+
+export function getSavedHostOrigin(): string | null {
+  const saved = localStorage.getItem(LAN_HOST_ORIGIN_KEY);
+  if (!saved) return null;
+  return normalizeHostOrigin(saved);
+}
+
+export function setSavedHostOrigin(raw: string): string | null {
+  const origin = normalizeHostOrigin(raw);
+  if (!origin) return null;
+  localStorage.setItem(LAN_HOST_ORIGIN_KEY, origin);
+  return origin;
+}
+
+export async function getRuntimePublicOrigin(): Promise<string | null> {
+  if (cachedRuntimeOrigin !== undefined) {
+    return cachedRuntimeOrigin;
+  }
+
+  try {
+    const response = await fetch(
+      `${RUNTIME_PUBLIC_ORIGIN_PATH}?t=${Date.now()}`,
+      {
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) {
+      cachedRuntimeOrigin = null;
+      return cachedRuntimeOrigin;
+    }
+    const raw = (await response.text()).trim();
+    if (!raw) {
+      cachedRuntimeOrigin = null;
+      return cachedRuntimeOrigin;
+    }
+
+    let parsedOrigin: string | null = null;
+    try {
+      const payload = JSON.parse(raw) as { origin?: string; updatedAt?: number };
+      const age = Date.now() - (payload.updatedAt ?? 0);
+      if (
+        typeof payload.origin === "string" &&
+        Number.isFinite(payload.updatedAt) &&
+        age >= 0 &&
+        age <= RUNTIME_ORIGIN_MAX_AGE_MS
+      ) {
+        parsedOrigin = normalizeHostOrigin(payload.origin);
+      }
+    } catch {
+      // Backward compatibility with previous plain-text format.
+      parsedOrigin = normalizeHostOrigin(raw);
+    }
+
+    cachedRuntimeOrigin = parsedOrigin;
+    return cachedRuntimeOrigin;
+  } catch {
+    cachedRuntimeOrigin = null;
+    return cachedRuntimeOrigin;
+  }
+}
+
+export async function getPreferredHostOrigin(): Promise<string | null> {
+  return getSavedHostOrigin() ?? (await getRuntimePublicOrigin());
+}
+
+export async function getBestHostInput(): Promise<string> {
+  const preferred = await getPreferredHostOrigin();
+  if (preferred) return preferred;
+  return defaultHostInput();
+}
+
+export function extractGameId(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const direct = trimmed;
+  if (GAME_ID_REGEX.test(direct)) {
+    return direct;
+  }
+
+  if (!trimmed.startsWith("http")) {
+    return null;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    const match = url.pathname.match(/\/game\/([^/?#]+)/);
+    const candidate = match?.[1];
+    if (!candidate) return null;
+    return GAME_ID_REGEX.test(candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}

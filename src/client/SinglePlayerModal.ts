@@ -1,7 +1,6 @@
-import { TemplateResult, html } from "lit";
+import { html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { translateText } from "../client/Utils";
-import { UserMeResponse } from "../core/ApiSchemas";
 import {
   Difficulty,
   GameMapSize,
@@ -13,7 +12,6 @@ import {
 } from "../core/game/Game";
 import { TeamCountConfig } from "../core/Schemas";
 import { generateID } from "../core/Util";
-import { hasLinkedAccount } from "./Api";
 import "./components/baseComponents/Button";
 import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
@@ -74,9 +72,6 @@ export class SinglePlayerModal extends BaseModal {
   @state() private useRandomMap: boolean = DEFAULT_OPTIONS.useRandomMap;
   @state() private gameMode: GameMode = DEFAULT_OPTIONS.gameMode;
   @state() private teamCount: TeamCountConfig = DEFAULT_OPTIONS.teamCount;
-  @state() private showAchievements: boolean = false;
-  @state() private mapWins: Map<GameMapType, Set<Difficulty>> = new Map();
-  @state() private userMeResponse: UserMeResponse | false = false;
   @state() private goldMultiplier: boolean = DEFAULT_OPTIONS.goldMultiplier;
   @state() private goldMultiplierValue: number | undefined =
     DEFAULT_OPTIONS.goldMultiplierValue;
@@ -87,83 +82,6 @@ export class SinglePlayerModal extends BaseModal {
   @state() private disabledUnits: UnitType[] = [
     ...DEFAULT_OPTIONS.disabledUnits,
   ];
-
-  connectedCallback() {
-    super.connectedCallback();
-    document.addEventListener(
-      "userMeResponse",
-      this.handleUserMeResponse as EventListener,
-    );
-  }
-
-  disconnectedCallback() {
-    document.removeEventListener(
-      "userMeResponse",
-      this.handleUserMeResponse as EventListener,
-    );
-    super.disconnectedCallback();
-  }
-
-  private toggleAchievements = () => {
-    this.showAchievements = !this.showAchievements;
-  };
-
-  private handleUserMeResponse = (
-    event: CustomEvent<UserMeResponse | false>,
-  ) => {
-    this.userMeResponse = event.detail;
-    this.applyAchievements(event.detail);
-  };
-
-  private renderNotLoggedInBanner(): TemplateResult {
-    if (crazyGamesSDK.isOnCrazyGames()) {
-      return html``;
-    }
-    return html`<button
-      class="px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-200 rounded-lg bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 whitespace-nowrap shrink-0 cursor-pointer hover:bg-yellow-500/30"
-      @click=${() => {
-        this.close();
-        window.showPage?.("page-account");
-      }}
-    >
-      ${translateText("single_modal.sign_in_for_achievements")}
-    </button>`;
-  }
-
-  private applyAchievements(userMe: UserMeResponse | false) {
-    if (!userMe) {
-      this.mapWins = new Map();
-      return;
-    }
-
-    const achievements = Array.isArray(userMe.player.achievements)
-      ? userMe.player.achievements
-      : [];
-
-    const completions =
-      achievements.find(
-        (achievement) => achievement?.type === "singleplayer-map",
-      )?.data ?? [];
-
-    const winsMap = new Map<GameMapType, Set<Difficulty>>();
-    for (const entry of completions) {
-      const { mapName, difficulty } = entry ?? {};
-      const isValidMap =
-        typeof mapName === "string" &&
-        Object.values(GameMapType).includes(mapName as GameMapType);
-      const isValidDifficulty =
-        typeof difficulty === "string" &&
-        Object.values(Difficulty).includes(difficulty as Difficulty);
-      if (!isValidMap || !isValidDifficulty) continue;
-
-      const map = mapName as GameMapType;
-      const set = winsMap.get(map) ?? new Set<Difficulty>();
-      set.add(difficulty as Difficulty);
-      winsMap.set(map, set);
-    }
-
-    this.mapWins = winsMap;
-  }
 
   render() {
     const inputCards = [
@@ -227,27 +145,7 @@ export class SinglePlayerModal extends BaseModal {
           title: translateText("main.solo") || "Solo",
           onBack: () => this.close(),
           ariaLabel: translateText("common.back"),
-          rightContent: hasLinkedAccount(this.userMeResponse)
-            ? html`<button
-                @click=${this.toggleAchievements}
-                class="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all shrink-0 ${this
-                  .showAchievements
-                  ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
-                  : "text-white/60"}"
-              >
-                <img
-                  src="/images/MedalIconWhite.svg"
-                  class="w-4 h-4 opacity-80 shrink-0"
-                  style="${this.showAchievements
-                    ? ""
-                    : "filter: grayscale(1);"}"
-                />
-                <span
-                  class="text-xs font-bold uppercase tracking-wider whitespace-nowrap"
-                  >${translateText("single_modal.toggle_achievements")}</span
-                >
-              </button>`
-            : this.renderNotLoggedInBanner(),
+          rightContent: undefined,
         })}
 
         <div
@@ -260,8 +158,6 @@ export class SinglePlayerModal extends BaseModal {
               map: {
                 selected: this.selectedMap,
                 useRandom: this.useRandomMap,
-                showMedals: this.showAchievements,
-                mapWins: this.mapWins,
               },
               difficulty: {
                 selected: this.selectedDifficulty,
@@ -329,13 +225,6 @@ export class SinglePlayerModal extends BaseModal {
 
         <!-- Footer Action -->
         <div class="p-6 border-t border-white/10 bg-black/20">
-          ${hasLinkedAccount(this.userMeResponse) && this.hasOptionsChanged()
-            ? html`<div
-                class="mb-4 px-4 py-3 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wider text-center"
-              >
-                ${translateText("single_modal.options_changed_no_achievements")}
-              </div>`
-            : null}
           <button
             @click=${this.startGame}
             class="w-full py-4 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0"
@@ -361,24 +250,6 @@ export class SinglePlayerModal extends BaseModal {
         ${content}
       </o-modal>
     `;
-  }
-
-  // Check if any options other than map and difficulty have been changed from defaults
-  private hasOptionsChanged(): boolean {
-    return (
-      this.disableNations !== DEFAULT_OPTIONS.disableNations ||
-      this.bots !== DEFAULT_OPTIONS.bots ||
-      this.infiniteGold !== DEFAULT_OPTIONS.infiniteGold ||
-      this.infiniteTroops !== DEFAULT_OPTIONS.infiniteTroops ||
-      this.compactMap !== DEFAULT_OPTIONS.compactMap ||
-      this.maxTimer !== DEFAULT_OPTIONS.maxTimer ||
-      this.instantBuild !== DEFAULT_OPTIONS.instantBuild ||
-      this.randomSpawn !== DEFAULT_OPTIONS.randomSpawn ||
-      this.gameMode !== DEFAULT_OPTIONS.gameMode ||
-      this.goldMultiplier !== DEFAULT_OPTIONS.goldMultiplier ||
-      this.startingGold !== DEFAULT_OPTIONS.startingGold ||
-      this.disabledUnits.length > 0
-    );
   }
 
   protected onClose(): void {

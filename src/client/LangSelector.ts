@@ -18,7 +18,7 @@ type LanguageMetadata = {
 export class LangSelector extends LitElement {
   @state() public translations: Record<string, string> | undefined;
   @state() public defaultTranslations: Record<string, string> | undefined;
-  @state() public currentLang: string = "en";
+  @state() public currentLang: string = "fr";
   @state() private languageList: any[] = [];
   @state() private debugMode: boolean = false;
   @state() isVisible = true;
@@ -65,7 +65,7 @@ export class LangSelector extends LitElement {
   }
 
   private getClosestSupportedLang(lang: string): string {
-    if (!lang) return "en";
+    if (!lang) return "fr";
     if (lang === "debug") return "debug";
     const supported = new Set(this.languageMetadata.map((entry) => entry.code));
     if (supported.has(lang)) return lang;
@@ -79,13 +79,12 @@ export class LangSelector extends LitElement {
       return candidates[0];
     }
 
-    return "en";
+    return "fr";
   }
 
   private async initializeLanguage() {
-    const browserLocale = navigator.language;
-    const savedLang = localStorage.getItem("lang");
-    const userLang = this.getClosestSupportedLang(savedLang ?? browserLocale);
+    const userLang = "fr";
+    localStorage.setItem("lang", userLang);
 
     const [defaultTranslations, translations] = await Promise.all([
       this.loadLanguage("en"),

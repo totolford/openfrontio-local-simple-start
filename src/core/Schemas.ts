@@ -144,6 +144,7 @@ export const PublicGameTypeSchema = z.enum(["ffa", "team", "special"]);
 const ClientInfoSchema = z.object({
   clientID: z.string(),
   username: z.string(),
+  flag: z.string().optional(),
 });
 
 export const GameInfoSchema = z.object({
@@ -179,6 +180,7 @@ export class LobbyInfoEvent implements GameEvent {
 export interface ClientInfo {
   clientID: ClientID;
   username: string;
+  flag?: string;
 }
 export enum LogSeverity {
   Debug = "DEBUG",

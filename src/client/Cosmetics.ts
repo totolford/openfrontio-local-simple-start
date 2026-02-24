@@ -11,7 +11,7 @@ import {
   PlayerPattern,
 } from "../core/Schemas";
 import { UserSettings } from "../core/game/UserSettings";
-import { createCheckoutSession, getApiBase, getUserMe } from "./Api";
+import { createCheckoutSession, getApiBase } from "./Api";
 
 export const TEMP_FLARE_OFFSET = 1 * 60 * 1000; // 1 minute
 
@@ -92,6 +92,14 @@ export function patternRelationship(
   userMeResponse: UserMeResponse | false,
   affiliateCode: string | null,
 ): "owned" | "purchasable" | "purchasable_no_trial" | "blocked" | number {
+  void pattern;
+  void colorPalette;
+  void userMeResponse;
+  void affiliateCode;
+  // Local fork behavior: all skins are unlocked.
+  return "owned";
+
+  /*
   const flares =
     userMeResponse === false ? [] : (userMeResponse.player.flares ?? []);
   const expirations: Record<string, number> =
@@ -146,38 +154,14 @@ export function patternRelationship(
     return "purchasable_no_trial";
   }
   return "purchasable";
+  */
 }
 
 export async function getPlayerCosmeticsRefs(): Promise<PlayerCosmeticRefs> {
   const userSettings = new UserSettings();
   const cosmetics = await fetchCosmetics();
-  let pattern: PlayerPattern | null =
+  const pattern: PlayerPattern | null =
     userSettings.getSelectedPatternName(cosmetics);
-
-  if (pattern) {
-    const userMe = await getUserMe();
-    if (userMe) {
-      const flareName =
-        pattern.colorPalette?.name === undefined
-          ? `pattern:${pattern.name}`
-          : `pattern:${pattern.name}:${pattern.colorPalette.name}`;
-      const flares = userMe.player.flares ?? [];
-      const expirations = userMe.player.flareExpiration ?? {};
-      const hasWildcard = flares.includes("pattern:*");
-      if (!hasWildcard) {
-        if (!flares.includes(flareName)) {
-          pattern = null;
-        } else if (expirations[flareName]) {
-          if (expirations[flareName]! - Date.now() <= TEMP_FLARE_OFFSET) {
-            pattern = null;
-          }
-        }
-      }
-    }
-    if (pattern === null) {
-      userSettings.setSelectedPatternName(undefined);
-    }
-  }
 
   return {
     flag: userSettings.getFlag(),

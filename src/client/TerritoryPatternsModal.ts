@@ -5,7 +5,6 @@ import { UserMeResponse } from "../core/ApiSchemas";
 import { ColorPalette, Cosmetics, Pattern } from "../core/CosmeticSchemas";
 import { UserSettings } from "../core/game/UserSettings";
 import { PlayerPattern } from "../core/Schemas";
-import { hasLinkedAccount } from "./Api";
 import { BaseModal } from "./components/BaseModal";
 import "./components/Difficulties";
 import "./components/PatternButton";
@@ -18,6 +17,8 @@ import {
   TEMP_FLARE_OFFSET,
 } from "./Cosmetics";
 import { translateText } from "./Utils";
+
+const UNLOCK_ALL_SKINS = true;
 
 @customElement("territory-patterns-modal")
 export class TerritoryPatternsModal extends BaseModal {
@@ -83,11 +84,7 @@ export class TerritoryPatternsModal extends BaseModal {
         title: translateText("territory_patterns.title"),
         onBack: () => this.close(),
         ariaLabel: translateText("common.back"),
-        rightContent: !hasLinkedAccount(this.userMeResponse)
-          ? html`<div class="flex items-center">
-              ${this.renderNotLoggedInWarning()}
-            </div>`
-          : undefined,
+        rightContent: undefined,
       })}
       <!-- TEMP DISABlE TAB SWITCHING
         <div class="flex items-center gap-2 justify-center">
@@ -133,6 +130,9 @@ export class TerritoryPatternsModal extends BaseModal {
             this.affiliateCode,
           );
         }
+        if (UNLOCK_ALL_SKINS) {
+          rel = "owned";
+        }
         if (rel === "blocked") {
           continue;
         }
@@ -141,7 +141,7 @@ export class TerritoryPatternsModal extends BaseModal {
           if (rel !== "owned" && !isTrial) continue;
         } else {
           // Store mode: hide owned items
-          if (rel === "owned") continue;
+          if (!UNLOCK_ALL_SKINS && rel === "owned") continue;
         }
         // Determine if this pattern/color is selected
         const isDefaultPattern = pattern === null;
@@ -161,7 +161,7 @@ export class TerritoryPatternsModal extends BaseModal {
             .requiresPurchase=${rel === "purchasable" ||
             rel === "purchasable_no_trial"}
             .allowTrial=${rel === "purchasable"}
-            .hasLinkedAccount=${hasLinkedAccount(this.userMeResponse)}
+            .hasLinkedAccount=${true}
             .trialCooldown=${this.userMeResponse !== false &&
             this.userMeResponse.player.tempFlaresCooldown}
             .trialTimeRemaining=${isTrial
@@ -183,11 +183,7 @@ export class TerritoryPatternsModal extends BaseModal {
 
     return html`
       <div class="flex flex-col">
-        <div class="pt-4 flex justify-center">
-          ${hasLinkedAccount(this.userMeResponse)
-            ? this.renderMySkinsButton()
-            : html``}
-        </div>
+        <div class="pt-4 flex justify-center">${this.renderMySkinsButton()}</div>
         ${!this.showOnlyOwned && buttons.length === 0
           ? html`<div
               class="text-white/40 text-sm font-bold uppercase tracking-wider text-center py-8"
@@ -216,18 +212,6 @@ export class TerritoryPatternsModal extends BaseModal {
       }}
     >
       ${translateText("territory_patterns.show_only_owned")}
-    </button>`;
-  }
-
-  private renderNotLoggedInWarning(): TemplateResult {
-    return html`<button
-      class="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors duration-200 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 cursor-pointer hover:bg-red-500/30"
-      @click=${() => {
-        this.close();
-        window.showPage?.("page-account");
-      }}
-    >
-      ${translateText("territory_patterns.not_logged_in")}
     </button>`;
   }
 

@@ -1,6 +1,16 @@
-- This is a sample changelog based off of v0.24.0.
-- This file will be replaced with real release notes during the release build process.
-  - Indented bullets look like this
+📦 **OpenFront Local Edition - Custom Changes**
+
+- Online public/ranked entry points have been removed from the main play menu.
+- Main menu now focuses on:
+  - Solo + Bots
+  - Local + Bots
+  - Join Host IP
+- Added host-IP based connection flow for local network sessions.
+- Added a Join-by-IP modal to connect directly to a host machine.
+- All territory skins are now unlocked by default in this build.
+- Invite copy links can use a saved host origin/IP.
+
+---
 
 📦 **OpenFront v24 Changelog**
 

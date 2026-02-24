@@ -3,6 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { getServerConfigFromClient } from "../../core/configuration/ConfigLoader";
 import { UserSettings } from "../../core/game/UserSettings";
 import { crazyGamesSDK } from "../CrazyGamesSDK";
+import { getPreferredHostOrigin } from "../LanHost";
 import { copyToClipboard, translateText } from "../Utils";
 
 @customElement("copy-button")
@@ -67,7 +68,9 @@ export class CopyButton extends LitElement {
 
   private async buildCopyUrl(): Promise<string> {
     const config = await getServerConfigFromClient();
-    let url = `${window.location.origin}/${config.workerPath(this.lobbyId)}/game/${this.lobbyId}`;
+    const preferredOrigin =
+      (await getPreferredHostOrigin()) ?? window.location.origin;
+    let url = `${preferredOrigin}/${config.workerPath(this.lobbyId)}/game/${this.lobbyId}`;
     if (this.includeLobbyQuery) {
       url += `?lobby&s=${encodeURIComponent(this.lobbySuffix)}`;
     }

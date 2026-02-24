@@ -31,6 +31,7 @@ import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { BaseModal } from "./components/BaseModal";
 import "./components/CopyButton";
+import "./components/GroupLobbyRoster";
 import "./components/LobbyConfigItem";
 import "./components/LobbyPlayerView";
 import { modalHeader } from "./components/ui/ModalHeader";
@@ -73,12 +74,14 @@ export class JoinLobbyModal extends BaseModal {
   };
 
   render() {
-    // Pre-join state: show lobby ID input form
     if (!this.currentLobbyId) {
       return this.renderJoinForm();
     }
 
-    // Post-join state: show lobby info (identical for public & private)
+    if (this.isPrivateLobby()) {
+      return this.renderPrivateGroupLobby();
+    }
+
     const secondsRemaining =
       this.lobbyStartAt !== null
         ? Math.max(0, Math.floor((this.lobbyStartAt - Date.now()) / 1000))
@@ -93,21 +96,12 @@ export class JoinLobbyModal extends BaseModal {
           : translateText("public_lobby.started");
     const maxPlayers = this.gameConfig?.maxPlayers ?? 0;
     const playerCount = this.players?.length ?? 0;
-    const hostClientID = this.isPrivateLobby()
-      ? (this.lobbyCreatorClientID ?? "")
-      : "";
     const content = html`
       <div class="${this.modalContainerClass}">
         ${modalHeader({
           title: translateText("public_lobby.title"),
           onBack: () => this.closeAndLeave(),
           ariaLabel: translateText("common.close"),
-          rightContent:
-            this.currentLobbyId && this.isPrivateLobby()
-              ? html`
-                  <copy-button .lobbyId=${this.currentLobbyId}></copy-button>
-                `
-              : undefined,
         })}
         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 mr-1">
           ${this.isConnecting
@@ -131,7 +125,7 @@ export class JoinLobbyModal extends BaseModal {
                         class="mt-6"
                         .gameMode=${this.gameConfig?.gameMode ?? GameMode.FFA}
                         .clients=${this.players}
-                        .lobbyCreatorClientID=${hostClientID}
+                        .lobbyCreatorClientID=${""}
                         .currentClientID=${this.currentClientID}
                         .teamCount=${this.gameConfig?.playerTeams ?? 2}
                         .nationCount=${this.nationCount}
@@ -145,56 +139,96 @@ export class JoinLobbyModal extends BaseModal {
               `}
         </div>
 
-        ${this.isPrivateLobby()
-          ? html`
-              <div
-                class="p-6 lg:p-6 border-t border-white/10 bg-black/20 shrink-0"
+        <div class="p-6 lg:p-6 border-t border-white/10 bg-black/20 shrink-0">
+          <div
+            class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between gap-3"
+          >
+            <div class="flex flex-col">
+              <span
+                class="text-[10px] font-bold uppercase tracking-widest text-white/40"
+                >${translateText("public_lobby.status")}</span
               >
-                <button
-                  class="w-full py-4 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none"
-                  disabled
-                >
-                  ${translateText("private_lobby.joined_waiting")}
-                </button>
-              </div>
-            `
-          : html`
-              <div
-                class="p-6 lg:p-6 border-t border-white/10 bg-black/20 shrink-0"
-              >
-                <div
-                  class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between gap-3"
-                >
-                  <div class="flex flex-col">
-                    <span
-                      class="text-[10px] font-bold uppercase tracking-widest text-white/40"
-                      >${translateText("public_lobby.status")}</span
+              <span class="text-sm font-bold text-white">${statusLabel}</span>
+            </div>
+            ${maxPlayers > 0
+              ? html`
+                  <div
+                    class="flex items-center gap-2 text-white/80 text-xs font-bold uppercase tracking-widest"
+                  >
+                    <span>${playerCount}/${maxPlayers}</span>
+                    <svg
+                      class="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
                     >
-                    <span class="text-sm font-bold text-white"
-                      >${statusLabel}</span
-                    >
+                      <path
+                        d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.972 0 004 15v3H1v-3a3 3 0 013.75-2.906z"
+                      ></path>
+                    </svg>
                   </div>
-                  ${maxPlayers > 0
-                    ? html`
-                        <div
-                          class="flex items-center gap-2 text-white/80 text-xs font-bold uppercase tracking-widest"
-                        >
-                          <span>${playerCount}/${maxPlayers}</span>
-                          <svg
-                            class="w-4 h-4 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.972 0 004 15v3H1v-3a3 3 0 013.75-2.906z"
-                            ></path>
-                          </svg>
-                        </div>
-                      `
-                    : html``}
+                `
+              : html``}
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (this.inline) {
+      return content;
+    }
+
+    return html`
+      <o-modal
+        ?hideHeader=${true}
+        ?hideCloseButton=${true}
+        ?inline=${this.inline}
+      >
+        ${content}
+      </o-modal>
+    `;
+  }
+
+  private renderPrivateGroupLobby() {
+    const content = html`
+      <div class="${this.modalContainerClass}">
+        ${modalHeader({
+          title: "Groupe",
+          onBack: () => this.closeAndLeave(),
+          ariaLabel: translateText("common.close"),
+          rightContent: this.currentLobbyId
+            ? html`<copy-button .lobbyId=${this.currentLobbyId}></copy-button>`
+            : undefined,
+        })}
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 mr-1">
+          ${this.isConnecting
+            ? html`
+                <div
+                  class="min-h-[240px] flex flex-col items-center justify-center gap-4"
+                >
+                  <div
+                    class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin"
+                  ></div>
+                  <p class="text-center text-white/80 text-sm">
+                    ${translateText("public_lobby.connecting")}
+                  </p>
                 </div>
-              </div>
-            `}
+              `
+            : html`
+                <group-lobby-roster
+                  .clients=${this.players}
+                  .lobbyCreatorClientID=${this.lobbyCreatorClientID ?? ""}
+                  .currentClientID=${this.currentClientID}
+                ></group-lobby-roster>
+              `}
+        </div>
+        <div class="p-6 lg:p-6 border-t border-white/10 bg-black/20 shrink-0">
+          <button
+            class="w-full py-4 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none"
+            disabled
+          >
+            En attente de l'hôte
+          </button>
+        </div>
       </div>
     `;
 
@@ -258,7 +292,7 @@ export class JoinLobbyModal extends BaseModal {
               submit
             ></o-button>
           </div>
-        </div>
+        </form>
       </div>
     `;
 

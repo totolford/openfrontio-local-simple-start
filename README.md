@@ -42,25 +42,55 @@ For license history, see [LICENSING.md](LICENSING.md).
 
 ## 📋 Prerequisites
 
-- [npm](https://www.npmjs.com/) (v10.9.2 or higher)
+- [Node.js](https://nodejs.org/) 22+ (includes npm)
 - A modern web browser (Chrome, Firefox, Edge, etc.)
 
-## 🚀 Installation
+## ⚡ Quick Start (Windows)
 
-1. **Clone the repository**
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/openfrontio/OpenFrontIO.git
    cd OpenFrontIO
    ```
 
-2. **Install dependencies**
+2. Install dependencies:
 
    ```bash
    npm run inst
    ```
 
-   Do NOT use `npm install` nor `npm i` but instead use our `npm run inst`. It runs the safer `npm ci --ignore-scripts` to install dependencies exactly according to the versions in `package-lock.json` and doesn't run scripts. This can prevent being hit by a supply chain attack.
+3. Launch with one double-click:
+
+   - Run [`start-openfront.cmd`](start-openfront.cmd)
+   - Open `http://localhost:9000`
+   - For internet play (outside your LAN), use the `https://*.loca.lt` URL shown in the terminal
+
+For LAN play with a friend, open `http://<host-lan-ip>:9000` on both PCs.
+
+## ⚡ Quick Start (Any OS)
+
+```bash
+git clone https://github.com/openfrontio/OpenFrontIO.git
+cd OpenFrontIO
+npm run inst
+npm run dev
+```
+
+Then open `http://localhost:9000`.
+
+For public internet access without router/admin setup:
+
+```bash
+npm run dev:public
+```
+
+Use the `https://*.loca.lt` URL printed in the terminal.
+
+## 🚀 Installation Notes
+
+Use `npm run inst` (not `npm install` / `npm i`).
+It runs `npm ci --ignore-scripts` to install exact lockfile versions without running install scripts.
 
 ## 🎮 Running the Game
 
@@ -74,7 +104,7 @@ npm run dev
 
 This will:
 
-- Start the webpack dev server for the client
+- Start the Vite dev server for the client
 - Launch the game server with development settings
 - Open the game in your default browser (to disable this behavior, set `SKIP_BROWSER_OPEN=true` in your environment)
 
