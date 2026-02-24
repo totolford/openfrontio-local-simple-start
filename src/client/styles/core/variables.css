@@ -3,32 +3,36 @@
   --breakPoint-tablet: 800px;
   --breakPoint-Desktop: 1024px;
   --blur-md: 4px;
-  --boxBackgroundColor: #111827cc;
-  --fontColor: #202020;
-  --fontColorLight: #fff;
+  --boxBackgroundColor: #08101bcc;
+  --fontColor: #dbe8f7;
+  --fontColorLight: #f8fbff;
 
-  /* Palette: Deep French Blue / Muted Cyan / Black / Forest Teal */
-  --frenchBlue: #1f3a70; /* Deeper French Blue */
-  --cyanBlue: #0f6ca3; /* Muted Cyan secondary */
-  --tealAccent: #1f6c5a; /* Darker Teal accent */
+  /* Palette: Atlantic Night / Cyan Blue / Signal Amber */
+  --frenchBlue: #0b2a4f;
+  --cyanBlue: #0d84b8;
+  --tealAccent: #0f766e;
+  --signalAmber: #ffb84f;
+  --signalRed: #ef4444;
+  --softWhite: #f8fbff;
+  --glassStroke: rgba(255, 255, 255, 0.18);
 
   --primaryColor: var(--frenchBlue);
-  --primaryColorHover: var(--tealAccent);
+  --primaryColorHover: #0f3c71;
   --primaryColorDisabled: linear-gradient(
     to right,
     rgb(74, 74, 74),
     rgb(61, 61, 61)
   );
   --secondaryColor: var(--cyanBlue);
-  --secondaryColorHover: var(--cyanBlue);
+  --secondaryColorHover: #0aa0de;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   --primaryColorDark: var(--frenchBlue);
-  --primaryColorHoverDark: var(--tealAccent);
+  --primaryColorHoverDark: #0f3c71;
   --primaryColorDisabledDark: #4b5563;
   --secondaryColorDark: var(--tealAccent);
   --secondaryColorHoverDark: var(--frenchBlue);
-  --fontColorDark: #f3f4f6;
+  --fontColorDark: #f8fbff;
 
   /* Achievements */
   --medal-easy: #cd7f32;

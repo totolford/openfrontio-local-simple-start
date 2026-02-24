@@ -11,13 +11,13 @@ export class PlayPage extends LitElement {
     return html`
       <div
         id="page-play"
-        class="flex flex-col gap-2 w-full lg:max-w-6xl mx-auto px-0 lg:px-4 lg:my-auto min-h-0"
+        class="of-play-shell flex flex-col gap-3 w-full lg:max-w-6xl mx-auto px-0 lg:px-4 lg:my-auto min-h-0"
       >
         <token-login class="absolute hidden"></token-login>
 
         <!-- Mobile: Fixed top bar -->
         <div
-          class="lg:hidden fixed left-0 right-0 top-0 z-40 pt-[env(safe-area-inset-top)] bg-[color-mix(in_oklab,var(--frenchBlue)_75%,black)] border-b border-white/10"
+          class="of-mobile-topbar lg:hidden fixed left-0 right-0 top-0 z-40 pt-[env(safe-area-inset-top)] bg-[color-mix(in_oklab,var(--frenchBlue)_75%,black)] border-b border-white/10"
         >
           <div
             class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center h-14 px-2 gap-2"
@@ -100,13 +100,13 @@ export class PlayPage extends LitElement {
         </div>
 
         <div
-          class="w-full pb-4 lg:pb-0 flex flex-col gap-0 lg:grid lg:grid-cols-12 lg:gap-2"
+          class="of-profile-row w-full pb-2 lg:pb-0 flex flex-col gap-2 lg:grid lg:grid-cols-12 lg:gap-2"
         >
           <!-- Mobile: spacer for fixed top bar -->
           <div class="lg:hidden h-[calc(env(safe-area-inset-top)+56px)]"></div>
 
           <div
-            class="px-2 py-2 bg-[color-mix(in_oklab,var(--frenchBlue)_75%,black)] border-y border-white/10 overflow-visible lg:col-span-9 lg:flex lg:items-center lg:gap-x-2 lg:h-[60px] lg:p-3 lg:relative lg:z-20 lg:border-y-0 lg:rounded-xl"
+            class="of-profile-strip px-2 py-2 bg-[color-mix(in_oklab,var(--frenchBlue)_75%,black)] border-y border-white/10 overflow-visible lg:col-span-9 lg:flex lg:items-center lg:gap-x-2 lg:h-[60px] lg:p-3 lg:relative lg:z-20 lg:border-y-0 lg:rounded-xl"
           >
             <div class="flex items-center gap-2 min-w-0 w-full">
               <username-input
@@ -135,7 +135,32 @@ export class PlayPage extends LitElement {
           </div>
         </div>
 
-        <game-mode-selector></game-mode-selector>
+        <section class="of-hero of-fade-up">
+          <div class="of-hero__content">
+            <p class="of-hero__kicker">OPENFRONT LOCAL</p>
+            <h2 class="of-hero__title">
+              Joue en solo ou crée ton groupe en 1 clic
+            </h2>
+            <p class="of-hero__text">
+              Héberge sur ton PC, partage une seule adresse, puis lance la
+              partie quand ton équipe est prête.
+            </p>
+            <div class="of-hero__badges">
+              <span class="of-hero__badge">Serveur local/public</span>
+              <span class="of-hero__badge">Bots configurables</span>
+              <span class="of-hero__badge">Connexion par URL</span>
+            </div>
+          </div>
+          <div class="of-hero__media">
+            <img
+              src="/images/GameplayScreenshot.png"
+              alt="OpenFront gameplay"
+              loading="lazy"
+            />
+          </div>
+        </section>
+
+        <game-mode-selector class="of-mode-selector"></game-mode-selector>
       </div>
     `;
   }

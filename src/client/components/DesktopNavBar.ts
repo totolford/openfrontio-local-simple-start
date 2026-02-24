@@ -46,9 +46,9 @@ export class DesktopNavBar extends LitElement {
 
     return html`
       <nav
-        class="hidden lg:flex w-full bg-slate-900 items-center justify-center gap-8 py-4 shrink-0 z-50 relative"
+        class="of-desktop-nav hidden lg:flex w-full bg-slate-900 items-center justify-center gap-8 py-4 shrink-0 z-50 relative"
       >
-        <div class="flex flex-col items-center justify-center">
+        <div class="of-brand flex flex-col items-center justify-center">
           <div class="h-8 text-[#2563eb]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -97,19 +97,19 @@ export class DesktopNavBar extends LitElement {
           ></div>
         </div>
         <button
-          class="nav-menu-item ${currentPage === "page-play"
+          class="nav-menu-item of-nav-item ${currentPage === "page-play"
             ? "active"
             : ""} text-white/70 hover:text-blue-500 font-bold tracking-widest uppercase cursor-pointer transition-colors [&.active]:text-blue-500"
           data-page="page-play"
           data-i18n="main.play"
         ></button>
         <button
-          class="nav-menu-item text-white/70 hover:text-blue-500 font-bold tracking-widest uppercase cursor-pointer transition-colors [&.active]:text-blue-500"
+          class="nav-menu-item of-nav-item text-white/70 hover:text-blue-500 font-bold tracking-widest uppercase cursor-pointer transition-colors [&.active]:text-blue-500"
           data-page="page-settings"
           data-i18n="main.settings"
         ></button>
         <button
-          class="nav-menu-item text-white/70 hover:text-blue-500 font-bold tracking-widest uppercase cursor-pointer transition-colors [&.active]:text-blue-500"
+          class="nav-menu-item of-nav-item text-white/70 hover:text-blue-500 font-bold tracking-widest uppercase cursor-pointer transition-colors [&.active]:text-blue-500"
           data-page="page-help"
           data-i18n="main.help"
         ></button>

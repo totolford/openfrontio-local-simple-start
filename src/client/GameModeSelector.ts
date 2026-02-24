@@ -4,7 +4,14 @@ import { HostLobbyModal } from "./HostLobbyModal";
 import { JoinIpModal } from "./JoinIpModal";
 import { SinglePlayerModal } from "./SinglePlayerModal";
 
-const CARD_BG = "bg-[color-mix(in_oklab,var(--frenchBlue)_70%,black)]";
+type GameModeCard = {
+  title: string;
+  subtitle: string;
+  badge: string;
+  image: string;
+  accent: string;
+  onClick: () => void;
+};
 
 @customElement("game-mode-selector")
 export class GameModeSelector extends LitElement {
@@ -37,11 +44,36 @@ export class GameModeSelector extends LitElement {
   public stop() {}
 
   render() {
+    const cards: GameModeCard[] = [
+      {
+        title: "Solo",
+        subtitle: "Partie instantanée avec réglages complets et bots.",
+        badge: "Rapide",
+        image: "/images/GameplayScreenshot.png",
+        accent: "255, 188, 90",
+        onClick: this.openSinglePlayerModal,
+      },
+      {
+        title: "Créer un groupe",
+        subtitle: "Héberge depuis ton PC et invite tes amis en lien direct.",
+        badge: "Host",
+        image: "/images/TerrainMapFrontPage.png",
+        accent: "24, 198, 160",
+        onClick: this.openHostLobby,
+      },
+      {
+        title: "Rejoindre un groupe",
+        subtitle: "Colle le lien d'invitation et entre immédiatement en lobby.",
+        badge: "Invite",
+        image: "/images/EuropeBackground.webp",
+        accent: "82, 168, 255",
+        onClick: this.openJoinIpModal,
+      },
+    ];
+
     return html`
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full mx-auto pb-4">
-        ${this.renderActionCard("Solo", this.openSinglePlayerModal)}
-        ${this.renderActionCard("Créer un groupe", this.openHostLobby)}
-        ${this.renderActionCard("Rejoindre un groupe", this.openJoinIpModal)}
+        ${cards.map((card) => this.renderActionCard(card))}
       </div>
     `;
   }
@@ -62,13 +94,19 @@ export class GameModeSelector extends LitElement {
     (document.querySelector("join-ip-modal") as JoinIpModal)?.open();
   };
 
-  private renderActionCard(title: string, onClick: () => void) {
+  private renderActionCard(card: GameModeCard) {
     return html`
       <button
-        @click=${onClick}
-        class="flex items-center justify-center w-full h-20 md:h-24 rounded-xl ${CARD_BG} border-0 transition-transform hover:scale-[1.02] active:scale-[0.98] text-sm lg:text-base font-bold text-white uppercase tracking-wider text-center"
+        @click=${card.onClick}
+        class="of-mode-card"
+        style=${`--of-mode-accent: ${card.accent}; --of-mode-image: url('${card.image}');`}
       >
-        ${title}
+        <span class="of-mode-card__scrim"></span>
+        <span class="of-mode-card__content">
+          <span class="of-mode-card__badge">${card.badge}</span>
+          <span class="of-mode-card__title">${card.title}</span>
+          <span class="of-mode-card__subtitle">${card.subtitle}</span>
+        </span>
       </button>
     `;
   }

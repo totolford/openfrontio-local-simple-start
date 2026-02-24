@@ -1,4 +1,4 @@
-import version from "resources/version.txt?raw";
+import version from "../version.txt?raw";
 import { UserMeResponse } from "../core/ApiSchemas";
 import { EventBus } from "../core/EventBus";
 import {

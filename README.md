@@ -1,295 +1,118 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="resources/images/OpenFrontLogoDark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="resources/images/OpenFrontLogo.svg">
-    <img src="resources/images/OpenFrontLogo.svg" alt="OpenFrontIO Logo" width="300">
-  </picture>
+  <img src="resources/images/OpenFrontLogo.svg" alt="OpenFrontIO Logo" width="320">
 </p>
 
-[OpenFront.io](https://openfront.io/) is an online real-time strategy game focused on territorial control and alliance building. Players compete to expand their territory, build structures, and form strategic alliances in various maps based on real-world geography.
+# OpenFront Local Edition
 
-This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO.
+Version locale d'OpenFront orientee jeu prive: Solo, creation de groupe, et connexion par URL d'invitation.
 
-![CI](https://github.com/openfrontio/OpenFrontIO/actions/workflows/ci.yml/badge.svg)
-[![Crowdin](https://badges.crowdin.net/openfront-mls/localized.svg)](https://crowdin.com/project/openfront-mls)
-[![CLA assistant](https://cla-assistant.io/readme/badge/openfrontio/OpenFrontIO)](https://cla-assistant.io/openfrontio/OpenFrontIO)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Assets: CC BY-SA 4.0](https://img.shields.io/badge/Assets-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+## 1. Prerequis
 
-## License
+- Node.js 22+ (npm inclus)
+- Windows 10/11, macOS, ou Linux
+- Un navigateur recent (Chrome, Edge, Firefox)
 
-OpenFront source code is licensed under the **GNU Affero General Public License v3.0**
-
-Current copyright notices appear in:
-
-- Footer: "© OpenFront and Contributors"
-- Loading screen: "© OpenFront and Contributors"
-
-Modified versions must preserve these notices in reasonably visible locations.
-
-See the [LICENSE](LICENSE) for complete requirements.
-
-For asset licensing, see [LICENSE-ASSETS](LICENSE-ASSETS).  
-For license history, see [LICENSING.md](LICENSING.md).
-
-## 🌟 Features
-
-- **Real-time Strategy Gameplay**: Expand your territory and engage in strategic battles
-- **Alliance System**: Form alliances with other players for mutual defense
-- **Multiple Maps**: Play across various geographical regions including Europe, Asia, Africa, and more
-- **Resource Management**: Balance your expansion with defensive capabilities
-- **Cross-platform**: Play in any modern web browser
-
-## 📋 Prerequisites
-
-- [Node.js](https://nodejs.org/) 22+ (includes npm)
-- A modern web browser (Chrome, Firefox, Edge, etc.)
-
-## ⚡ Quick Start (Windows)
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/openfrontio/OpenFrontIO.git
-   cd OpenFrontIO
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   npm run inst
-   ```
-
-3. Launch with one double-click:
-
-   - Run [`start-openfront.cmd`](start-openfront.cmd)
-   - Open `http://localhost:9000`
-   - For internet play (outside your LAN), use the `https://*.trycloudflare.com` or `https://*.loca.lt` URL shown in the terminal
-
-For LAN play with a friend, open `http://<host-lan-ip>:9000` on both PCs.
-
-## ⚡ Quick Start (Any OS)
+## 2. Installation
 
 ```bash
 git clone https://github.com/openfrontio/OpenFrontIO.git
 cd OpenFrontIO
 npm run inst
-npm run dev
 ```
 
-Then open `http://localhost:9000`.
+## 3. Lancement simple (Windows recommande)
 
-For public internet access without router/admin setup:
+Lance directement le fichier:
 
-```bash
-npm run dev:public
+```text
+start-openfront.cmd
 ```
 
-Use the public URL printed in the terminal (`https://*.trycloudflare.com` preferred, fallback `https://*.loca.lt`).
+Tu peux le lancer en double-cliquant dessus.
 
-## 🌍 Remote Multiplayer (anyone can host)
+Ce script:
+- installe les dependances si besoin
+- demarre le jeu en mode public
+- affiche les URLs utiles (localhost, LAN, URL internet)
 
-Goal: host on one PC and let a friend join from another network (even far away).
+## 4. Lancement manuel (tous OS)
 
-1. Host runs:
-
-   ```bash
-   npm run dev:public
-   ```
-
-2. In-game, click **Créer un groupe** and copy the **Adresse du groupe**.
-3. Guest runs their own game client, opens **Rejoindre un groupe**, and pastes the full group URL.
-4. Host opens **Configurer la partie** and starts the match.
-
-Notes for PC + VM testing:
-
-- Run only one host process per machine (avoid multiple `dev`, `dev:lan`, or `dev:public` at the same time).
-- Use the full shared URL (for example `https://xxxx.trycloudflare.com/w0/game/abcd1234`), not `localhost`.
-- Do not add `:9000` to `https://*.trycloudflare.com` or `https://*.loca.lt` URLs.
-- `localhost` is local to each machine/VM, so it cannot be used by another device.
-
-## 🚀 Installation Notes
-
-Use `npm run inst` (not `npm install` / `npm i`).
-It runs `npm ci --ignore-scripts` to install exact lockfile versions without running install scripts.
-
-## 🎮 Running the Game
-
-### Development Mode
-
-Run both the client and server in development mode with live reloading:
+Mode local dev:
 
 ```bash
 npm run dev
 ```
 
-This will:
-
-- Start the Vite dev server for the client
-- Launch the game server with development settings
-- Open the game in your default browser (to disable this behavior, set `SKIP_BROWSER_OPEN=true` in your environment)
-
-### LAN Host Mode (play with a friend on your network)
-
-Run this mode on the host player's PC:
+Mode LAN (meme reseau):
 
 ```bash
 npm run dev:lan
 ```
 
-Then:
-
-- Host opens `http://<host-lan-ip>:9000` (not just localhost)
-- Other player(s) open the same URL from their PC
-- Host creates a private lobby and can set bots in lobby options
-
-### Client Only
-
-To run just the client with hot reloading:
+Mode internet (reseaux differents):
 
 ```bash
-npm run start:client
+npm run dev:public
 ```
 
-### Server Only
+## 5. Jouer avec un ami (reseaux differents)
 
-To run just the server with development settings:
+1. Le host lance `start-openfront.cmd` (ou `npm run dev:public`).
+2. Le host clique **Creer un groupe**.
+3. Le host copie l'adresse affichee.
+4. L'invite ouvre son jeu, clique **Rejoindre un groupe**, puis colle l'adresse.
+5. Le host configure la partie et lance.
 
-```bash
-npm run start:server-dev
+Important:
+- N'ajoute pas `:9000` si l'adresse est `https://...trycloudflare.com` ou `https://...loca.lt`.
+- `localhost` ne fonctionne que sur la machine locale.
+
+## 6. Raccourci bureau (Windows)
+
+Pour lancer en un clic:
+
+1. Clic droit sur `start-openfront.cmd`
+2. **Envoyer vers > Bureau (creer un raccourci)**
+3. Lance le jeu depuis ce raccourci
+
+## 7. Depannage rapide
+
+### Erreur `EPERM unlink lightningcss...`
+- Ferme les terminaux Node/Vite.
+- Supprime `node_modules`.
+- Relance `npm run inst`.
+- Si besoin, desactive temporairement l'antivirus sur le dossier.
+
+### Message `Blocked request. This host ... is not allowed`
+- Demarre via les scripts fournis (`dev:public`, `start-openfront.cmd`).
+- Verifie que l'URL ouverte est bien celle affichee par le tunnel.
+
+### `ERR_CONNECTION_REFUSED`
+- Verifie que le terminal host tourne encore.
+- Verifie que l'URL copiee est complete.
+- N'ajoute pas de port sur les URLs `https://...`.
+
+## 8. Scripts utiles
+
+- `npm run inst`: installation propre via lockfile
+- `npm run dev`: client + serveur local
+- `npm run dev:lan`: acces LAN
+- `npm run dev:public`: acces internet via tunnel
+- `npm run build-dev`: build de verification
+- `npm test`: tests
+
+## 9. Changelog in-game
+
+Le panneau **News** charge le fichier:
+
+```text
+resources/changelog.md
 ```
 
-### Connecting to staging or production backends
+Modifie ce fichier pour afficher tes notes de version directement dans le jeu.
 
-Sometimes it's useful to connect to production servers when replaying a game, testing user profiles, purchases, or login flow.
+## 10. Licence
 
-> To replay a production game, make sure you're on the same commit that the game you want to replay was executed on, you can find the `gitCommit` value via `https://api.openfront.io/game/[gameId]`.
-> Unfinished games cannot be replayed on localhost.
+- Code: GNU AGPL v3 (`LICENSE`)
+- Assets: CC BY-SA 4.0 (`LICENSE-ASSETS`)
 
-To connect to staging api servers:
-
-```bash
-npm run dev:staging
-```
-
-To connect to production api servers:
-
-```bash
-npm run dev:prod
-```
-
-## 🛠️ Development Tools
-
-- **Format code**:
-
-  ```bash
-  npm run format
-  ```
-
-- **Lint code**:
-
-  ```bash
-  npm run lint
-  ```
-
-- **Lint and fix code**:
-
-  ```bash
-  npm run lint:fix
-  ```
-
-- **Testing**
-  ```bash
-  npm test
-  ```
-
-## 🏗️ Project Structure
-
-- `/src/client` - Frontend game client
-- `/src/core` - Shared game logic
-- `/src/server` - Backend game server
-- `/resources` - Static assets (images, maps, etc.)
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Request to join the development [Discord](https://discord.gg/K9zernJB5z).
-1. Fork the repository
-1. Create your feature branch (`git checkout -b amazing-feature`)
-1. Commit your changes (`git commit -m 'Add some amazing feature'`)
-1. Push to the branch (`git push origin amazing-feature`)
-1. Open a Pull Request
-
-## 🌐 Translation
-
-Translators are welcome! Please feel free to help translate into your language.
-How to help?
-
-1. Join the translation [Discord](https://discord.gg/3zZzacjWFr)
-2. Go to the project's Crowdin translation page: [https://crowdin.com/project/openfront-mls](https://crowdin.com/project/openfront-mls)
-3. Login if you already have an account / Sign up if you don't have one
-4. Join the project
-5. Select the language you want to translate in. If your language isn't on the list, click the "Request New Language" button and enter the language you want added there.
-6. Translate the strings
-
-Feel free to ask questions in the translation Discord server!
-
-### Project Governance
-
-- The project maintainer ([evan](https://github.com/evanpelle)) has final authority on all code changes and design decisions
-- All pull requests require maintainer approval before merging
-- The maintainer reserves the right to reject contributions that don't align with the project's vision or quality standards
-
-### Contribution Path for New Contributors
-
-To ensure code quality and project stability, we use a progressive contribution system:
-
-1. **New Contributors**: Limited to UI improvements and small bug fixes only
-
-   - This helps you become familiar with the codebase
-   - UI changes are easier to review and less likely to break core functionality
-   - Small, focused PRs have a higher chance of being accepted
-
-2. **Established Contributors**: After several successful PRs and demonstrating understanding of the codebase, you may work on more complex features
-
-3. **Core Contributors**: Only those with extensive experience with the project may modify critical game systems
-
-### How to Contribute Successfully
-
-1. **Before Starting Work**:
-
-   - Open an issue describing what you want to contribute
-   - Wait for maintainer feedback before investing significant time
-   - Small improvements can proceed directly to PR stage
-
-2. **Code Quality Requirements**:
-
-   - All code must be well-commented and follow existing style patterns
-   - New features should not break existing functionality
-   - Code should be thoroughly tested before submission
-   - All code changes in src/core _MUST_ be tested.
-
-3. **Pull Request Process**:
-
-   - Keep PRs focused on a single feature or bug fix
-   - Include screenshots for UI changes
-   - Describe what testing you've performed
-   - Be responsive to feedback and requested changes
-
-4. **Testing Requirements**:
-   - Verify your changes work as expected
-   - Test on multiple systems/browsers if applicable
-   - Document your testing process in the PR
-
-### Communication
-
-- Be respectful and constructive in all project interactions
-- Questions are welcome, but please search existing issues first
-- For major changes, discuss in an issue before starting work
-
-### Final Notes
-
-Remember that maintaining this project requires significant effort. The maintainer appreciates your contributions but must prioritize long-term project health and stability. Not all contributions will be accepted, and that's okay.
-
-Thank you for helping make OpenFront better!

@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
-import Countries from "resources/countries.json" with { type: "json" };
+import Countries from "../data/countries.json";
 import { translateText } from "./Utils";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";

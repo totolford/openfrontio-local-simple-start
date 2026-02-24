@@ -1,14 +1,19 @@
-📦 **OpenFront Local Edition - Custom Changes**
+📦 **OpenFront Local Edition - Mise à jour 2026-02-24**
 
-- Online public/ranked entry points have been removed from the main play menu.
-- Main menu now focuses on:
-  - Solo + Bots
-  - Local + Bots
-  - Join Host IP
-- Added host-IP based connection flow for local network sessions.
-- Added a Join-by-IP modal to connect directly to a host machine.
-- All territory skins are now unlocked by default in this build.
-- Invite copy links can use a saved host origin/IP.
+### ✨ Interface & visuel
+- Refonte visuelle de l'écran principal avec nouveau fond, surcouches dynamiques et meilleure lisibilité.
+- Ajout d'un bandeau d'accueil "OpenFront Local" avec aperçu de gameplay.
+- Cartes d'actions améliorées (Solo / Créer un groupe / Rejoindre un groupe) avec images dédiées et descriptions.
+- Typographie locale améliorée (Overpass) pour une UI plus propre et homogène.
+
+### 🎮 Flux de jeu local/multi
+- Navigation simplifiée: accès direct aux trois modes utiles en local.
+- Création de groupe centrée sur le partage d'une adresse d'invitation.
+- Rejoindre un groupe par adresse/URL depuis le menu dédié.
+
+### ⚙️ Correctifs techniques
+- Amélioration du rattrapage des ticks client pour limiter les ralentissements côté invité.
+- Suppression des warnings Vite liés aux imports d'assets publics.
 
 ---
 

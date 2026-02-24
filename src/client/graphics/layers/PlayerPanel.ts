@@ -1,6 +1,6 @@
 import { html, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import Countries from "resources/countries.json" with { type: "json" };
+import Countries from "../../../data/countries.json";
 import { EventBus } from "../../../core/EventBus";
 import {
   AllPlayers,

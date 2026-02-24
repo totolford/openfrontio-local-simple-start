@@ -125,23 +125,39 @@
     <div id="hex-grid" class="fixed inset-0 -z-50 pointer-events-none">
       <div
         id="background-layer"
-        class="absolute inset-0 bg-cover bg-center opacity-50 [filter:brightness(1.0)] dark:[filter:sepia(0.2)_saturate(1.2)_hue-rotate(180deg)_brightness(0.9)]"
+        class="absolute inset-0 bg-cover bg-center opacity-60"
         style="
-          background-image: url(&quot;/images/background.webp&quot;);
+          background-image: url(&quot;/images/EuropeBackgroundBlurred.webp&quot;);
+        "
+      ></div>
+      <div
+        class="absolute inset-0"
+        style="
+          background: radial-gradient(circle at 12% 18%, rgba(13, 110, 253, 0.34), transparent 45%),
+            radial-gradient(circle at 86% 14%, rgba(22, 163, 74, 0.2), transparent 35%),
+            radial-gradient(circle at 50% 100%, rgba(2, 132, 199, 0.22), transparent 50%),
+            linear-gradient(180deg, rgba(3, 7, 18, 0.26), rgba(3, 7, 18, 0.88));
+        "
+      ></div>
+      <div
+        class="absolute inset-0 bg-center bg-no-repeat bg-cover hidden lg:block"
+        style="
+          background-image: url(&quot;/images/TerrainMapFrontPage.png&quot;);
+          opacity: 0.18;
         "
       ></div>
       <div
         class="absolute inset-0 bg-center bg-no-repeat bg-contain hidden lg:block"
         style="
           background-image: url(&quot;/images/OpenFront.webp&quot;);
-          opacity: 0.25;
+          opacity: 0.24;
         "
       ></div>
       <div
         class="absolute inset-0 bg-center bg-no-repeat bg-contain lg:hidden"
         style="
           background-image: url(&quot;/images/OF.webp&quot;);
-          opacity: 0.25;
+          opacity: 0.28;
         "
       ></div>
     </div>

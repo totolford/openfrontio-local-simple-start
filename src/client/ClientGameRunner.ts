@@ -52,6 +52,8 @@ import { createRenderer, GameRenderer } from "./graphics/GameRenderer";
 import { GoToPlayerEvent } from "./graphics/layers/Leaderboard";
 import SoundManager from "./sound/SoundManager";
 
+const WORKER_HEARTBEAT_INTERVAL_MS = 50;
+
 export interface LobbyConfig {
   serverConfig: ServerConfig;
   cosmetics: PlayerCosmeticRefs;
@@ -261,6 +263,7 @@ export class ClientGameRunner {
   private lastMessageTime: number = 0;
   private connectionCheckInterval: NodeJS.Timeout | null = null;
   private goToPlayerTimeout: NodeJS.Timeout | null = null;
+  private workerHeartbeatInterval: number | null = null;
 
   private lastTickReceiveTime: number = 0;
   private currentTickDelay: number | undefined = undefined;
@@ -385,14 +388,20 @@ export class ClientGameRunner {
       }
     });
 
-    const worker = this.worker;
-    const keepWorkerAlive = () => {
+    const sendHeartbeat = () => {
       if (this.isActive) {
-        worker.sendHeartbeat();
-        requestAnimationFrame(keepWorkerAlive);
+        this.worker.sendHeartbeat();
       }
     };
-    requestAnimationFrame(keepWorkerAlive);
+    if (this.workerHeartbeatInterval !== null) {
+      window.clearInterval(this.workerHeartbeatInterval);
+      this.workerHeartbeatInterval = null;
+    }
+    sendHeartbeat();
+    this.workerHeartbeatInterval = window.setInterval(
+      sendHeartbeat,
+      WORKER_HEARTBEAT_INTERVAL_MS,
+    );
 
     const onconnect = () => {
       console.log("Connected to game server!");
@@ -501,6 +510,7 @@ export class ClientGameRunner {
               : message.turn,
           );
           this.turnsSeen++;
+          this.worker.sendHeartbeat();
         }
       }
     };
@@ -524,6 +534,10 @@ export class ClientGameRunner {
     if (this.goToPlayerTimeout) {
       clearTimeout(this.goToPlayerTimeout);
       this.goToPlayerTimeout = null;
+    }
+    if (this.workerHeartbeatInterval !== null) {
+      window.clearInterval(this.workerHeartbeatInterval);
+      this.workerHeartbeatInterval = null;
     }
   }
 

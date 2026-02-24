@@ -1,4 +1,4 @@
-import version from "resources/version.txt?raw";
+import version from "../../version.txt?raw";
 import { createGameRunner, GameRunner } from "../GameRunner";
 import { FetchGameMapLoader } from "../game/FetchGameMapLoader";
 import { ErrorUpdate, GameUpdateViewData } from "../game/GameUpdates";
@@ -16,7 +16,8 @@ import {
 const ctx: Worker = self as any;
 let gameRunner: Promise<GameRunner> | null = null;
 const mapLoader = new FetchGameMapLoader(`/maps`, version);
-const MAX_TICKS_PER_HEARTBEAT = 4;
+const MIN_TICKS_PER_HEARTBEAT = 4;
+const MAX_TICKS_PER_HEARTBEAT = 24;
 
 function gameUpdate(gu: GameUpdateViewData | ErrorUpdate) {
   // skip if ErrorUpdate
@@ -49,7 +50,17 @@ ctx.addEventListener("message", async (e: MessageEvent<MainThreadMessage>) => {
         break;
       }
       const pendingTurns = gr.pendingTurns();
-      const ticksToRun = Math.min(pendingTurns, MAX_TICKS_PER_HEARTBEAT);
+      // Run more ticks when backlog grows to avoid slow-motion clients on
+      // lower-end/VM browsers where timers are throttled.
+      const adaptiveBudget = Math.max(
+        MIN_TICKS_PER_HEARTBEAT,
+        Math.ceil(pendingTurns / 2),
+      );
+      const ticksToRun = Math.min(
+        pendingTurns,
+        adaptiveBudget,
+        MAX_TICKS_PER_HEARTBEAT,
+      );
       for (let i = 0; i < ticksToRun; i++) {
         if (!gr.executeNextTick(gr.pendingTurns())) {
           break;

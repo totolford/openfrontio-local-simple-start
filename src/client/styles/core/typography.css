@@ -1,3 +1,32 @@
+@font-face {
+  font-family: "OverpassLocal";
+  src: url("/fonts/overpass.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OverpassLocal";
+  src: url("/fonts/overpass-bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-ui: "OverpassLocal", "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-display: "OverpassLocal", "Arial Black", "Trebuchet MS", sans-serif;
+}
+
+body {
+  font-family: var(--font-ui);
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .t-link {
   color: #ffffffb3;
   transition: var(--transition);

@@ -1,7 +1,7 @@
 import { html, LitElement } from "lit";
 import { resolveMarkdown } from "lit-markdown";
 import { customElement, property, query } from "lit/decorators.js";
-import version from "resources/version.txt?raw";
+import version from "../version.txt?raw";
 import { translateText } from "../client/Utils";
 import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
