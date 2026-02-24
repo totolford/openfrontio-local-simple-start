@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { translateText } from "../client/Utils";
+import { copyToClipboard, translateText } from "../client/Utils";
 import { getServerConfigFromClient } from "../core/configuration/ConfigLoader";
 import { EventBus } from "../core/EventBus";
 import {
@@ -23,20 +23,21 @@ import { generateID } from "../core/Util";
 import { getPlayToken } from "./Auth";
 import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
-import "./components/CopyButton";
 import "./components/GameConfigSettings";
 import "./components/GroupLobbyRoster";
 import "./components/LobbyPlayerView";
 import "./components/ToggleInputCard";
+import "./PatternInput";
 import { modalHeader } from "./components/ui/ModalHeader";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
-import { JoinIpModal } from "./JoinIpModal";
 import {
-  getBestHostInput,
-  setSavedHostOrigin,
+  getBestHostInputForHosting,
+  getRuntimePublicOrigin,
+  normalizeHostOrigin,
 } from "./LanHost";
 import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
+import { validateUsername } from "../core/validations/username";
 import {
   getBotsForCompactMap,
   getRandomMapType,
@@ -84,6 +85,8 @@ export class HostLobbyModal extends BaseModal {
   @state() private currentClientID: string = "";
   @state() private nationCount: number = 0;
   @state() private hostAddressInput: string = "";
+  @state() private groupJoinUrl: string = "";
+  @state() private groupUsernameInput: string = "";
   @state() private showConfigMenu: boolean = false;
 
   @property({ attribute: false }) eventBus: EventBus | null = null;
@@ -92,6 +95,8 @@ export class HostLobbyModal extends BaseModal {
   private mapLoader = terrainMapFileLoader;
 
   private leaveLobbyOnClose = true;
+  private lobbyInitialized = false;
+  private openConfigMenuOnOpen = false;
 
   private readonly handleLobbyInfo = (event: LobbyInfoEvent) => {
     const lobby = event.lobby;
@@ -150,62 +155,127 @@ export class HostLobbyModal extends BaseModal {
     this.eventBus?.off(LobbyInfoEvent, this.handleLobbyInfo);
   }
 
+  private containerClass(): string {
+    if (this.inline) {
+      return "fixed inset-0 z-[41000] h-screen flex flex-col overflow-hidden bg-black/85 backdrop-blur-xl";
+    }
+    return this.modalContainerClass;
+  }
+
   render() {
     return this.showConfigMenu
       ? this.renderConfigMenu()
       : this.renderGroupMenu();
   }
 
+  public openExistingLobby(
+    lobbyId: string,
+    options?: { showConfigMenu?: boolean },
+  ): void {
+    if (!isValidGameID(lobbyId)) {
+      window.dispatchEvent(
+        new CustomEvent("show-message", {
+          detail: {
+            message: "ID de groupe invalide",
+            color: "red",
+            duration: 2500,
+          },
+        }),
+      );
+      return;
+    }
+
+    this.lobbyId = lobbyId;
+    this.lobbyInitialized = true;
+    this.openConfigMenuOnOpen = options?.showConfigMenu ?? false;
+
+    if (this.isModalOpen) {
+      this.showConfigMenu = this.openConfigMenuOnOpen;
+      this.openConfigMenuOnOpen = false;
+      window.showPage?.("page-host-lobby");
+      void this.refreshHostAddress();
+      void this.refreshGroupJoinUrl();
+      return;
+    }
+
+    super.open();
+  }
+
   private renderGroupMenu() {
     const content = html`
-      <div class="${this.modalContainerClass}">
+      <div class="${this.containerClass()}">
         ${modalHeader({
           title: "Groupe",
           onBack: () => {
-            this.leaveLobbyOnClose = true;
-            this.close();
+            window.showPage?.("page-play");
           },
           ariaLabel: translateText("common.back"),
-          rightContent: html`
-            <copy-button
-              .lobbyId=${this.lobbyId}
-              .lobbySuffix=${this.lobbyUrlSuffix}
-              include-lobby-query
-            ></copy-button>
-          `,
+          rightContent: undefined,
         })}
 
         <div
-          class="flex-1 overflow-y-auto custom-scrollbar p-6 mr-1 mx-auto w-full max-w-5xl space-y-6"
+          class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 w-full space-y-6"
         >
           <div class="p-4 rounded-xl border border-white/10 bg-black/20">
             <div
               class="text-xs font-bold uppercase tracking-widest text-white/60 mb-2"
             >
-              Connexion par IP
+              Adresse du groupe
             </div>
             <div class="flex flex-col gap-3">
               <input
-                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                .value=${this.hostAddressInput}
-                @input=${(e: Event) =>
-                  (this.hostAddressInput = (e.target as HTMLInputElement).value)}
-                placeholder="192.168.1.42:9000"
+                readonly
+                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white/90 placeholder-white/40 focus:outline-none transition-all text-sm font-mono"
+                .value=${this.groupJoinUrl}
+                placeholder="En attente de création du groupe..."
               />
               <div class="flex flex-wrap gap-2">
                 <button
                   class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-500 text-white transition-colors"
-                  @click=${this.saveHostAddress}
+                  @click=${this.copyGroupAddress}
                 >
-                  Sauvegarder l'IP
+                  Copier l'adresse
                 </button>
                 <button
                   class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 text-white transition-colors border border-white/10"
-                  @click=${this.openJoinIpModal}
+                  @click=${this.refreshHostAddress}
                 >
-                  Rejoindre par IP
+                  Actualiser l'IP hôte
                 </button>
               </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl border border-white/10 bg-black/20 space-y-3">
+            <div class="text-xs font-bold uppercase tracking-widest text-white/60">
+              Profil du groupe
+            </div>
+            <div class="flex flex-col md:flex-row gap-3">
+              <input
+                class="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                .value=${this.groupUsernameInput}
+                @input=${(e: Event) =>
+                  (this.groupUsernameInput = (
+                    e.target as HTMLInputElement
+                  ).value)}
+                placeholder="Pseudo"
+              />
+              <button
+                class="px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 text-white transition-colors border border-white/10"
+                @click=${this.applyGroupUsername}
+              >
+                Changer pseudo
+              </button>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-white/60 uppercase tracking-wider">
+                Motif
+              </span>
+              <pattern-input
+                show-select-label
+                adaptive-size
+                class="h-12"
+              ></pattern-input>
             </div>
           </div>
 
@@ -213,12 +283,20 @@ export class HostLobbyModal extends BaseModal {
             .clients=${this.clients}
             .lobbyCreatorClientID=${this.lobbyCreatorClientID}
             .currentClientID=${this.currentClientID}
+            .canManage=${this.currentClientID === this.lobbyCreatorClientID}
+            .onKickPlayer=${(clientID: string) => this.kickPlayer(clientID)}
           ></group-lobby-roster>
         </div>
 
         <div
-          class="p-6 pt-4 border-t border-white/10 bg-black/20 shrink-0 flex justify-end"
+          class="p-6 pt-4 border-t border-white/10 bg-black/20 shrink-0 flex flex-col sm:flex-row gap-3 sm:justify-between"
         >
+          <button
+            class="min-w-[220px] py-4 px-6 text-sm font-bold text-white uppercase tracking-widest bg-red-600/80 hover:bg-red-600 rounded-xl transition-all shadow-lg shadow-red-900/20 hover:shadow-red-900/40"
+            @click=${() => this.close()}
+          >
+            Quitter le groupe
+          </button>
           <button
             class="min-w-[220px] py-4 px-6 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none"
             @click=${() => {
@@ -318,49 +396,42 @@ export class HostLobbyModal extends BaseModal {
     ];
 
     const content = html`
-      <div class="${this.modalContainerClass}">
+      <div class="${this.containerClass()}">
         ${modalHeader({
           title: "Configuration de partie",
           onBack: () => {
             this.showConfigMenu = false;
           },
           ariaLabel: translateText("common.back"),
-          rightContent: html`
-            <copy-button
-              .lobbyId=${this.lobbyId}
-              .lobbySuffix=${this.lobbyUrlSuffix}
-              include-lobby-query
-            ></copy-button>
-          `,
+          rightContent: undefined,
         })}
 
         <div
-          class="flex-1 overflow-y-auto custom-scrollbar p-6 mr-1 mx-auto w-full max-w-5xl"
+          class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 w-full"
         >
           <div class="mb-6 p-4 rounded-xl border border-white/10 bg-black/20">
             <div class="text-xs font-bold uppercase tracking-widest text-white/60 mb-2">
-              Connexion par IP
+              Adresse du groupe
             </div>
             <div class="flex flex-col gap-3">
               <input
-                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                .value=${this.hostAddressInput}
-                @input=${(e: Event) =>
-                  (this.hostAddressInput = (e.target as HTMLInputElement).value)}
-                placeholder="192.168.1.42:9000"
+                readonly
+                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white/90 placeholder-white/40 focus:outline-none transition-all text-sm font-mono"
+                .value=${this.groupJoinUrl}
+                placeholder="En attente de création du groupe..."
               />
               <div class="flex flex-wrap gap-2">
                 <button
                   class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-600 hover:bg-blue-500 text-white transition-colors"
-                  @click=${this.saveHostAddress}
+                  @click=${this.copyGroupAddress}
                 >
-                  Sauvegarder l'IP
+                  Copier l'adresse
                 </button>
                 <button
                   class="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/15 text-white transition-colors border border-white/10"
-                  @click=${this.openJoinIpModal}
+                  @click=${this.refreshHostAddress}
                 >
-                  Rejoindre par IP
+                  Actualiser l'IP hôte
                 </button>
               </div>
             </div>
@@ -492,11 +563,20 @@ export class HostLobbyModal extends BaseModal {
   }
 
   protected onOpen(): void {
-    this.showConfigMenu = false;
-    this.currentClientID = "";
+    this.showConfigMenu = this.openConfigMenuOnOpen;
+    this.openConfigMenuOnOpen = false;
     this.startLobbyUpdates();
-    void this.populateDefaultHost();
+    void this.refreshHostAddress();
+    this.syncGroupUsernameFromLocal();
+
+    if (this.lobbyInitialized && this.lobbyId) {
+      void this.refreshGroupJoinUrl();
+      return;
+    }
+
+    this.currentClientID = "";
     this.lobbyId = generateID();
+    this.lobbyInitialized = true;
     // Note: clientID will be assigned by server when we join the lobby
     // lobbyCreatorClientID stays empty until then
 
@@ -510,6 +590,7 @@ export class HostLobbyModal extends BaseModal {
         crazyGamesSDK.showInviteButton(this.lobbyId);
         const url = await this.constructUrl();
         this.updateHistory(url);
+        await this.refreshGroupJoinUrl();
       })
       .then(() => {
         this.dispatchEvent(
@@ -522,6 +603,10 @@ export class HostLobbyModal extends BaseModal {
             composed: true,
           }),
         );
+      })
+      .catch((error) => {
+        this.lobbyInitialized = false;
+        console.error("Failed to create group lobby", error);
       });
     if (this.modalEl) {
       this.modalEl.onClose = () => {
@@ -585,11 +670,14 @@ export class HostLobbyModal extends BaseModal {
     this.currentClientID = "";
     this.nationCount = 0;
     this.hostAddressInput = "";
+    this.groupJoinUrl = "";
+    this.groupUsernameInput = "";
     this.goldMultiplier = false;
     this.goldMultiplierValue = undefined;
     this.startingGold = false;
     this.startingGoldValue = undefined;
     this.showConfigMenu = false;
+    this.lobbyInitialized = false;
 
     this.leaveLobbyOnClose = true;
   }
@@ -975,13 +1063,44 @@ export class HostLobbyModal extends BaseModal {
     }
   }
 
-  private saveHostAddress = () => {
-    const saved = setSavedHostOrigin(this.hostAddressInput);
-    if (!saved) {
+  private async refreshHostAddress() {
+    this.hostAddressInput = await getBestHostInputForHosting();
+    void this.refreshGroupJoinUrl();
+  }
+
+  private async refreshGroupJoinUrl() {
+    const currentLobbyId = this.lobbyId;
+    if (!currentLobbyId) {
+      this.groupJoinUrl = "";
+      return;
+    }
+
+    const config = await getServerConfigFromClient();
+    const normalizedInput = normalizeHostOrigin(this.hostAddressInput);
+    const preferred = normalizedInput ?? (await getRuntimePublicOrigin());
+    const fallback = normalizeHostOrigin(window.location.origin);
+    const origin = preferred ?? fallback;
+    if (!origin) {
+      return;
+    }
+
+    if (this.lobbyId !== currentLobbyId) {
+      return;
+    }
+
+    this.hostAddressInput = origin;
+    this.groupJoinUrl = `${origin}/${config.workerPath(currentLobbyId)}/game/${currentLobbyId}`;
+  }
+
+  private async copyGroupAddress() {
+    if (!this.groupJoinUrl) {
+      await this.refreshGroupJoinUrl();
+    }
+    if (!this.groupJoinUrl) {
       window.dispatchEvent(
         new CustomEvent("show-message", {
           detail: {
-            message: "IP invalide",
+            message: "Adresse du groupe indisponible",
             color: "red",
             duration: 2500,
           },
@@ -989,25 +1108,56 @@ export class HostLobbyModal extends BaseModal {
       );
       return;
     }
-    this.hostAddressInput = saved;
+
+    await copyToClipboard(this.groupJoinUrl);
     window.dispatchEvent(
       new CustomEvent("show-message", {
         detail: {
-          message: `IP sauvegardée: ${saved}`,
+          message: "Adresse du groupe copiée",
           color: "green",
-          duration: 2000,
+          duration: 1800,
+        },
+      }),
+    );
+  }
+
+  private syncGroupUsernameFromLocal() {
+    const currentUsername = localStorage.getItem("username");
+    this.groupUsernameInput = currentUsername?.trim() ?? "";
+  }
+
+  private applyGroupUsername = () => {
+    const next = this.groupUsernameInput.trim();
+    const validation = validateUsername(next);
+    if (!validation.isValid) {
+      window.dispatchEvent(
+        new CustomEvent("show-message", {
+          detail: {
+            message: validation.error ?? "Pseudo invalide",
+            color: "red",
+            duration: 2500,
+          },
+        }),
+      );
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("username-set", {
+        detail: { username: next },
+      }),
+    );
+    this.groupUsernameInput = next;
+    window.dispatchEvent(
+      new CustomEvent("show-message", {
+        detail: {
+          message: "Pseudo mis à jour",
+          color: "green",
+          duration: 1800,
         },
       }),
     );
   };
-
-  private openJoinIpModal = () => {
-    (document.querySelector("join-ip-modal") as JoinIpModal)?.open();
-  };
-
-  private async populateDefaultHost() {
-    this.hostAddressInput = await getBestHostInput();
-  }
 }
 
 async function createLobby(gameID: string): Promise<GameInfo> {

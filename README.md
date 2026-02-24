@@ -87,6 +87,26 @@ npm run dev:public
 
 Use the `https://*.loca.lt` URL printed in the terminal.
 
+## 🌍 Remote Multiplayer (anyone can host)
+
+Goal: host on one PC and let a friend join from another network (even far away).
+
+1. Host runs:
+
+   ```bash
+   npm run dev:public
+   ```
+
+2. In-game, click **Créer un groupe** and copy the **Adresse du groupe**.
+3. Guest runs their own game client, opens **Rejoindre un groupe**, and pastes the full group URL.
+4. Host opens **Configurer la partie** and starts the match.
+
+Notes for PC + VM testing:
+
+- Run only one host process per machine (avoid multiple `dev`, `dev:lan`, or `dev:public` at the same time).
+- Use the full shared URL (for example `https://xxxx.loca.lt/w0/game/abcd1234`), not `localhost`.
+- `localhost` is local to each machine/VM, so it cannot be used by another device.
+
 ## 🚀 Installation Notes
 
 Use `npm run inst` (not `npm install` / `npm i`).

@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
   const devFrontendHost = process.env.VITE_HOST ?? "localhost";
   const devFrontendPort = Number.parseInt(process.env.VITE_PORT ?? "9000", 10);
-  const devBackendHost = process.env.DEV_BACKEND_HOST ?? "localhost";
+  const devBackendHost = process.env.DEV_BACKEND_HOST ?? "127.0.0.1";
   const devMasterPort = Number.parseInt(
     process.env.DEV_MASTER_PORT ?? "3000",
     10,
@@ -123,6 +123,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: devFrontendHost,
       port: devFrontendPort,
+      strictPort: true,
       // Automatically open the browser when the server starts
       open: process.env.SKIP_BROWSER_OPEN !== "true",
       proxy: {

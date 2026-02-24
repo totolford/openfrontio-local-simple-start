@@ -370,21 +370,9 @@ class Client {
       console.warn("Territory patterns modal element not found");
     }
 
-    // Attach listener to any pattern-input component
-    document.querySelectorAll("pattern-input").forEach((patternInput) => {
-      patternInput.addEventListener("pattern-input-click", () => {
-        // Open the Store page which contains the patterns UI
-        window.showPage?.("page-item-store");
-        const skinStoreModal = document.getElementById(
-          "page-item-store",
-        ) as HTMLElement & { open?: (opts: any) => void };
-        if (skinStoreModal) {
-          skinStoreModal.classList.remove("hidden");
-          if (typeof skinStoreModal.open === "function") {
-            skinStoreModal.open({ showOnlyOwned: true });
-          }
-        }
-      });
+    // Global listener so dynamic pattern inputs (e.g. group lobby) also work.
+    document.addEventListener("pattern-input-click", () => {
+      this.patternsModal?.open({ showOnlyOwned: false });
     });
 
     if (isInIframe()) {

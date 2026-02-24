@@ -4,6 +4,7 @@ export const LAN_HOST_ORIGIN_KEY = "openfront_host_origin";
 const RUNTIME_PUBLIC_ORIGIN_PATH = "/runtime/public-origin.txt";
 const RUNTIME_ORIGIN_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 let cachedRuntimeOrigin: string | null | undefined;
+let cachedPublicIpOrigin: string | null | undefined;
 
 export function normalizeHostOrigin(raw: string): string | null {
   const value = raw.trim();
@@ -30,6 +31,44 @@ export function defaultHostInput(): string {
   const host = window.location.hostname || "localhost";
   const port = window.location.port || "9000";
   return `${host}:${port}`;
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  const value = hostname.trim().toLowerCase();
+  return (
+    value === "localhost" ||
+    value === "127.0.0.1" ||
+    value === "::1" ||
+    value === "[::1]"
+  );
+}
+
+async function getDetectedPublicOrigin(): Promise<string | null> {
+  if (cachedPublicIpOrigin !== undefined) {
+    return cachedPublicIpOrigin;
+  }
+
+  try {
+    const response = await fetch("https://api.ipify.org?format=json", {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      cachedPublicIpOrigin = null;
+      return cachedPublicIpOrigin;
+    }
+    const payload = (await response.json()) as { ip?: string };
+    const ip = typeof payload.ip === "string" ? payload.ip.trim() : "";
+    if (!ip) {
+      cachedPublicIpOrigin = null;
+      return cachedPublicIpOrigin;
+    }
+    const port = window.location.port || "9000";
+    cachedPublicIpOrigin = normalizeHostOrigin(`http://${ip}:${port}`);
+    return cachedPublicIpOrigin;
+  } catch {
+    cachedPublicIpOrigin = null;
+    return cachedPublicIpOrigin;
+  }
 }
 
 export function getSavedHostOrigin(): string | null {
@@ -99,6 +138,43 @@ export async function getPreferredHostOrigin(): Promise<string | null> {
 export async function getBestHostInput(): Promise<string> {
   const preferred = await getPreferredHostOrigin();
   if (preferred) return preferred;
+  const runtimeLocation = normalizeHostOrigin(window.location.origin);
+  if (runtimeLocation) {
+    try {
+      const runtimeUrl = new URL(runtimeLocation);
+      if (!isLoopbackHost(runtimeUrl.hostname)) {
+        return runtimeLocation;
+      }
+    } catch {
+      // ignore and fallback below
+    }
+  }
+
+  const publicOrigin = await getDetectedPublicOrigin();
+  if (publicOrigin) return publicOrigin;
+
+  return defaultHostInput();
+}
+
+export async function getBestHostInputForHosting(): Promise<string> {
+  const runtimeOrigin = await getRuntimePublicOrigin();
+  if (runtimeOrigin) return runtimeOrigin;
+
+  const runtimeLocation = normalizeHostOrigin(window.location.origin);
+  if (runtimeLocation) {
+    try {
+      const runtimeUrl = new URL(runtimeLocation);
+      if (!isLoopbackHost(runtimeUrl.hostname)) {
+        return runtimeLocation;
+      }
+    } catch {
+      // ignore and fallback below
+    }
+  }
+
+  const publicOrigin = await getDetectedPublicOrigin();
+  if (publicOrigin) return publicOrigin;
+
   return defaultHostInput();
 }
 

@@ -3,18 +3,16 @@ import { customElement, query, state } from "lit/decorators.js";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";
 import {
-  extractGameId,
   getBestHostInput,
+  normalizeHostOrigin,
   setSavedHostOrigin,
 } from "./LanHost";
 
 @customElement("join-ip-modal")
 export class JoinIpModal extends BaseModal {
-  @query("#join-ip-host-input") private hostInput!: HTMLInputElement;
-  @query("#join-ip-lobby-input") private lobbyInput!: HTMLInputElement;
+  @query("#join-ip-target-input") private targetInput!: HTMLInputElement;
 
-  @state() private hostAddress = "";
-  @state() private lobbyIdOrUrl = "";
+  @state() private targetAddress = "";
 
   constructor() {
     super();
@@ -31,29 +29,16 @@ export class JoinIpModal extends BaseModal {
         })}
         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 mr-1">
           <label class="block text-xs font-bold uppercase tracking-wider text-white/60">
-            IP de l'hote ou hote:port
+            Adresse du groupe (IP ou lien complet)
           </label>
           <input
-            id="join-ip-host-input"
+            id="join-ip-target-input"
             class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-            .value=${this.hostAddress}
+            .value=${this.targetAddress}
             @input=${(e: Event) => {
-              this.hostAddress = (e.target as HTMLInputElement).value;
+              this.targetAddress = (e.target as HTMLInputElement).value;
             }}
-            placeholder="192.168.1.42:9000"
-          />
-
-          <label class="block text-xs font-bold uppercase tracking-wider text-white/60">
-            ID du groupe (optionnel)
-          </label>
-          <input
-            id="join-ip-lobby-input"
-            class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-            .value=${this.lobbyIdOrUrl}
-            @input=${(e: Event) => {
-              this.lobbyIdOrUrl = (e.target as HTMLInputElement).value;
-            }}
-            placeholder="Colle un ID de groupe ou un lien"
+            placeholder="Ex: http://x.x.x.x:9000/game/abc123 ou x.x.x.x:9000"
           />
         </div>
 
@@ -85,17 +70,16 @@ export class JoinIpModal extends BaseModal {
   }
 
   protected onOpen(): void {
-    void this.populateDefaultHost();
-    this.lobbyIdOrUrl = "";
+    void this.populateDefaultTarget();
   }
 
-  private async populateDefaultHost() {
-    this.hostAddress = await getBestHostInput();
+  private async populateDefaultTarget() {
+    this.targetAddress = await getBestHostInput();
   }
 
   private connectToHost = () => {
-    const origin = setSavedHostOrigin(this.hostAddress);
-    if (!origin) {
+    const raw = this.targetAddress.trim();
+    if (!raw) {
       window.dispatchEvent(
         new CustomEvent("show-message", {
           detail: {
@@ -108,8 +92,41 @@ export class JoinIpModal extends BaseModal {
       return;
     }
 
-    const gameID = extractGameId(this.lobbyIdOrUrl);
-    const target = gameID ? `${origin}/game/${gameID}` : `${origin}/`;
-    window.location.href = target;
+    const withProtocol =
+      raw.startsWith("http://") || raw.startsWith("https://")
+        ? raw
+        : `http://${raw}`;
+
+    try {
+      const url = new URL(withProtocol);
+      const origin = normalizeHostOrigin(url.origin);
+      if (!origin) {
+        throw new Error("invalid_origin");
+      }
+      setSavedHostOrigin(origin);
+
+      const hasGamePath = /\/game\/[^/?#]+/.test(url.pathname);
+      if (hasGamePath) {
+        window.location.href = `${origin}${url.pathname}${url.search}${url.hash}`;
+        return;
+      }
+
+      window.location.href = `${origin}/`;
+    } catch {
+      const origin = setSavedHostOrigin(raw);
+      if (!origin) {
+        window.dispatchEvent(
+          new CustomEvent("show-message", {
+            detail: {
+              message: "Adresse de groupe invalide",
+              color: "red",
+              duration: 2500,
+            },
+          }),
+        );
+        return;
+      }
+      window.location.href = `${origin}/`;
+    }
   };
 }

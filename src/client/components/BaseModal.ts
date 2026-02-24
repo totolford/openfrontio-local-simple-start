@@ -55,7 +55,8 @@ export abstract class BaseModal extends LitElement {
    * Only closes if the modal is open.
    */
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && this.isModalOpen) {
+    const isInlineVisible = !this.inline || !this.classList.contains("hidden");
+    if (e.key === "Escape" && this.isModalOpen && isInlineVisible) {
       e.preventDefault();
       this.close();
     }

@@ -82,6 +82,7 @@ export class GameServer {
   public desyncCount = 0;
 
   private lobbyInfoIntervalId: ReturnType<typeof setInterval> | null = null;
+  private pinnedLobbyCreatorClientID: ClientID | undefined;
 
   constructor(
     public readonly id: string,
@@ -97,9 +98,19 @@ export class GameServer {
   }
 
   private get lobbyCreatorID(): ClientID | undefined {
-    return this.creatorPersistentID
-      ? this.persistentIdToClientId.get(this.creatorPersistentID)
-      : undefined;
+    if (this.pinnedLobbyCreatorClientID) {
+      const isPinnedClientActive = this.activeClients.some(
+        (c) => c.clientID === this.pinnedLobbyCreatorClientID,
+      );
+      if (isPinnedClientActive) {
+        return this.pinnedLobbyCreatorClientID;
+      }
+    }
+
+    if (!this.creatorPersistentID) {
+      return undefined;
+    }
+    return this.persistentIdToClientId.get(this.creatorPersistentID);
   }
 
   public updateGameConfig(gameConfig: Partial<GameConfig>): void {
@@ -245,6 +256,17 @@ export class GameServer {
     this.allClients.set(client.clientID, client);
     this.addListeners(client);
     this.startLobbyInfoBroadcast();
+
+    // Pin lobby creator to the first active creator client in this session.
+    // This prevents duplicate sessions with the same persistentID from
+    // unexpectedly stealing host role while the original host is still connected.
+    if (
+      !this.pinnedLobbyCreatorClientID &&
+      this.creatorPersistentID &&
+      client.persistentID === this.creatorPersistentID
+    ) {
+      this.pinnedLobbyCreatorClientID = client.clientID;
+    }
 
     // In case a client joined the game late and missed the start message.
     if (this._hasStarted) {

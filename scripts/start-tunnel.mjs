@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const port = process.env.TUNNEL_PORT ?? "9000";
+const port = process.env.TUNNEL_PORT ?? process.env.VITE_PORT ?? "9000";
 const localHost = process.env.TUNNEL_LOCAL_HOST ?? "127.0.0.1";
 const runtimeFile = path.resolve("resources/runtime/public-origin.txt");
 

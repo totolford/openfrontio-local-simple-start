@@ -8,6 +8,8 @@ export class GroupLobbyRoster extends LitElement {
   @property({ type: Array }) clients: ClientInfo[] = [];
   @property({ type: String }) lobbyCreatorClientID: string = "";
   @property({ type: String }) currentClientID: string = "";
+  @property({ type: Boolean }) canManage = false;
+  @property({ attribute: false }) onKickPlayer?: (clientID: string) => void;
 
   createRenderRoot() {
     return this;
@@ -29,6 +31,19 @@ export class GroupLobbyRoster extends LitElement {
       </span>`;
     }
     return html``;
+  }
+
+  private renderKickButton(client: ClientInfo) {
+    if (!this.canManage) return html``;
+    if (!this.onKickPlayer) return html``;
+    if (client.clientID === this.lobbyCreatorClientID) return html``;
+
+    return html`<button
+      class="inline-flex px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+      @click=${() => this.onKickPlayer?.(client.clientID)}
+    >
+      Exclure
+    </button>`;
   }
 
   private renderFlag(client: ClientInfo) {
@@ -84,6 +99,7 @@ export class GroupLobbyRoster extends LitElement {
                   ${client.username}
                 </span>
                 ${this.renderRoleTag(client)}
+                ${this.renderKickButton(client)}
               </div>
               ${this.renderFlag(client)}
             </div>

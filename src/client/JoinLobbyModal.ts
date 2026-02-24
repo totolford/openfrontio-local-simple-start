@@ -30,7 +30,6 @@ import { crazyGamesSDK } from "./CrazyGamesSDK";
 import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { BaseModal } from "./components/BaseModal";
-import "./components/CopyButton";
 import "./components/GroupLobbyRoster";
 import "./components/LobbyConfigItem";
 import "./components/LobbyPlayerView";
@@ -55,6 +54,13 @@ export class JoinLobbyModal extends BaseModal {
   private leaveLobbyOnClose = true;
   private countdownTimerId: number | null = null;
   private handledJoinTimeout = false;
+
+  private privateGroupContainerClass(): string {
+    if (this.inline) {
+      return "fixed inset-0 z-[41000] h-screen flex flex-col overflow-hidden bg-black/85 backdrop-blur-xl";
+    }
+    return this.modalContainerClass;
+  }
 
   private isPrivateLobby(): boolean {
     return this.gameConfig?.gameType === GameType.Private;
@@ -189,15 +195,18 @@ export class JoinLobbyModal extends BaseModal {
   }
 
   private renderPrivateGroupLobby() {
+    const isCurrentPlayerHost =
+      this.currentClientID !== "" &&
+      this.lobbyCreatorClientID !== null &&
+      this.currentClientID === this.lobbyCreatorClientID;
+
     const content = html`
-      <div class="${this.modalContainerClass}">
+      <div class="${this.privateGroupContainerClass()}">
         ${modalHeader({
           title: "Groupe",
-          onBack: () => this.closeAndLeave(),
+          onBack: () => window.showPage?.("page-play"),
           ariaLabel: translateText("common.close"),
-          rightContent: this.currentLobbyId
-            ? html`<copy-button .lobbyId=${this.currentLobbyId}></copy-button>`
-            : undefined,
+          rightContent: undefined,
         })}
         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 mr-1">
           ${this.isConnecting
@@ -221,12 +230,23 @@ export class JoinLobbyModal extends BaseModal {
                 ></group-lobby-roster>
               `}
         </div>
-        <div class="p-6 lg:p-6 border-t border-white/10 bg-black/20 shrink-0">
+        <div
+          class="p-6 lg:p-6 border-t border-white/10 bg-black/20 shrink-0 flex flex-col sm:flex-row gap-3 sm:justify-between"
+        >
           <button
-            class="w-full py-4 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none"
-            disabled
+            class="min-w-[220px] py-4 px-6 text-sm font-bold text-white uppercase tracking-widest bg-red-600/80 hover:bg-red-600 rounded-xl transition-all shadow-lg shadow-red-900/20 hover:shadow-red-900/40"
+            @click=${() => this.closeAndLeave()}
           >
-            En attente de l'hôte
+            Quitter le groupe
+          </button>
+          <button
+            class="min-w-[220px] py-4 px-6 text-sm font-bold text-white uppercase tracking-widest bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5 active:translate-y-0 disabled:transform-none"
+            @click=${this.openHostConfigFromGroup}
+            ?disabled=${!isCurrentPlayerHost}
+          >
+            ${isCurrentPlayerHost
+              ? "Configurer et lancer"
+              : "En attente de l'hôte"}
           </button>
         </div>
       </div>
@@ -246,6 +266,36 @@ export class JoinLobbyModal extends BaseModal {
       </o-modal>
     `;
   }
+
+  private openHostConfigFromGroup = () => {
+    if (
+      !this.currentLobbyId ||
+      !this.currentClientID ||
+      !this.lobbyCreatorClientID ||
+      this.currentClientID !== this.lobbyCreatorClientID
+    ) {
+      return;
+    }
+
+    const hostModal = document.querySelector("host-lobby-modal") as
+      | (HTMLElement & {
+          openExistingLobby?: (
+            lobbyId: string,
+            options?: { showConfigMenu?: boolean },
+          ) => void;
+        })
+      | null;
+
+    if (!hostModal || typeof hostModal.openExistingLobby !== "function") {
+      this.showMessage("Menu hôte indisponible", "red");
+      return;
+    }
+
+    this.closeWithoutLeaving();
+    hostModal.openExistingLobby(this.currentLobbyId, {
+      showConfigMenu: true,
+    });
+  };
 
   private renderJoinForm() {
     const content = html`

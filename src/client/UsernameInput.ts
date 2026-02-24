@@ -42,6 +42,7 @@ export class UsernameInput extends LitElement {
     super.connectedCallback();
     const stored = this.getUsername();
     this.parseAndSetUsername(stored);
+    window.addEventListener("username-set", this.handleExternalUsername as EventListener);
     crazyGamesSDK.getUsername().then((username) => {
       if (username) {
         this.parseAndSetUsername(username ?? genAnonUsername());
@@ -68,6 +69,15 @@ export class UsernameInput extends LitElement {
 
     this.validateAndStore();
   }
+
+  private handleExternalUsername = (
+    event: CustomEvent<{ username?: string }>,
+  ) => {
+    const next = event.detail?.username;
+    if (typeof next !== "string") return;
+    this.parseAndSetUsername(next);
+    this.requestUpdate();
+  };
 
   render() {
     return html`
@@ -199,6 +209,14 @@ export class UsernameInput extends LitElement {
 
   public isValid(): boolean {
     return this._isValid;
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener(
+      "username-set",
+      this.handleExternalUsername as EventListener,
+    );
+    super.disconnectedCallback();
   }
 }
 
