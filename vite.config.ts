@@ -124,6 +124,7 @@ export default defineConfig(({ mode }) => {
       host: devFrontendHost,
       port: devFrontendPort,
       strictPort: true,
+      allowedHosts: true,
       // Automatically open the browser when the server starts
       open: process.env.SKIP_BROWSER_OPEN !== "true",
       proxy: {

@@ -20,3 +20,14 @@
 {"level":"info","time":"2026-02-24T12:43:08Z","message":"Starting metrics server on 127.0.0.1:20241/metrics"}
 {"level":"info","event":0,"connection":"cfdee03c-9387-49b6-8670-666f48b4742c","connIndex":0,"location":"cdg09","ip":"198.41.200.23","protocol":"quic","time":"2026-02-24T12:43:09Z","message":"Registered tunnel connection"}
 {"level":"error","error":"lookup region1.v2.argotunnel.com: i/o timeout","time":"2026-02-24T12:43:13Z","message":"Failed to initialize DNS local resolver"}
+{"level":"error","error":"lookup region1.v2.argotunnel.com: i/o timeout","time":"2026-02-24T12:48:18Z","message":"Failed to refresh DNS local resolver"}
+{"level":"error","error":"lookup region1.v2.argotunnel.com: i/o timeout","time":"2026-02-24T12:53:23Z","message":"Failed to refresh DNS local resolver"}
+{"level":"info","time":"2026-02-24T12:54:24Z","message":"Initiating graceful shutdown due to signal terminated ..."}
+{"level":"error","event":0,"ip":"198.41.200.23","connIndex":0,"error":"context canceled","time":"2026-02-24T12:54:24Z","message":"failed to run the datagram handler"}
+{"level":"error","event":0,"ip":"198.41.200.23","connIndex":0,"error":"accept stream listener encountered a failure while serving","time":"2026-02-24T12:54:24Z","message":"failed to serve tunnel connection"}
+{"level":"error","event":0,"ip":"198.41.200.23","connIndex":0,"error":"accept stream listener encountered a failure while serving","time":"2026-02-24T12:54:24Z","message":"Serve tunnel error"}
+{"level":"info","event":0,"ip":"198.41.200.23","connIndex":0,"time":"2026-02-24T12:54:24Z","message":"Retrying connection in up to 1s"}
+{"level":"error","connIndex":0,"time":"2026-02-24T12:54:24Z","message":"Connection terminated"}
+{"level":"error","time":"2026-02-24T12:54:24Z","message":"no more connections active and exiting"}
+{"level":"info","time":"2026-02-24T12:54:24Z","message":"Tunnel server stopped"}
+{"level":"info","time":"2026-02-24T12:54:24Z","message":"Metrics server stopped"}
