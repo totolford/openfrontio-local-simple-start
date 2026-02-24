@@ -38,7 +38,7 @@ export class JoinIpModal extends BaseModal {
             @input=${(e: Event) => {
               this.targetAddress = (e.target as HTMLInputElement).value;
             }}
-            placeholder="Ex: http://x.x.x.x:9000/game/abc123 ou x.x.x.x:9000"
+            placeholder="Ex: https://xxxx.loca.lt/w0/game/abc123 ou 192.168.1.42:9000"
           />
         </div>
 

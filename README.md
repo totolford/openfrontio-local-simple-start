@@ -64,7 +64,7 @@ For license history, see [LICENSING.md](LICENSING.md).
 
    - Run [`start-openfront.cmd`](start-openfront.cmd)
    - Open `http://localhost:9000`
-   - For internet play (outside your LAN), use the `https://*.loca.lt` URL shown in the terminal
+   - For internet play (outside your LAN), use the `https://*.trycloudflare.com` or `https://*.loca.lt` URL shown in the terminal
 
 For LAN play with a friend, open `http://<host-lan-ip>:9000` on both PCs.
 
@@ -85,7 +85,7 @@ For public internet access without router/admin setup:
 npm run dev:public
 ```
 
-Use the `https://*.loca.lt` URL printed in the terminal.
+Use the public URL printed in the terminal (`https://*.trycloudflare.com` preferred, fallback `https://*.loca.lt`).
 
 ## 🌍 Remote Multiplayer (anyone can host)
 
@@ -104,7 +104,8 @@ Goal: host on one PC and let a friend join from another network (even far away).
 Notes for PC + VM testing:
 
 - Run only one host process per machine (avoid multiple `dev`, `dev:lan`, or `dev:public` at the same time).
-- Use the full shared URL (for example `https://xxxx.loca.lt/w0/game/abcd1234`), not `localhost`.
+- Use the full shared URL (for example `https://xxxx.trycloudflare.com/w0/game/abcd1234`), not `localhost`.
+- Do not add `:9000` to `https://*.trycloudflare.com` or `https://*.loca.lt` URLs.
 - `localhost` is local to each machine/VM, so it cannot be used by another device.
 
 ## 🚀 Installation Notes

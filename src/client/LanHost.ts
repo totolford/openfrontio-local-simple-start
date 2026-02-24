@@ -9,19 +9,46 @@ let cachedPublicIpOrigin: string | null | undefined;
 export function normalizeHostOrigin(raw: string): string | null {
   const value = raw.trim();
   if (!value) return null;
+  const hasExplicitProtocol =
+    value.startsWith("http://") || value.startsWith("https://");
 
   const withProtocol =
-    value.startsWith("http://") || value.startsWith("https://")
-      ? value
-      : `http://${value}`;
+    hasExplicitProtocol ? value : `http://${value}`;
 
   try {
     const url = new URL(withProtocol);
     const protocol = url.protocol === "https:" ? "https:" : "http:";
     const hostname = url.hostname;
     if (!hostname) return null;
-    const port = url.port || "9000";
-    return `${protocol}//${hostname}:${port}`;
+    const host =
+      hostname.includes(":") && !hostname.startsWith("[")
+        ? `[${hostname}]`
+        : hostname;
+    const isLocalTunnelHost = hostname.toLowerCase().endsWith(".loca.lt");
+    const port = url.port;
+
+    if (protocol === "https:") {
+      if (port === "" || port === "443") {
+        return `${protocol}//${host}`;
+      }
+      // localtunnel exposes HTTPS on the default port; forcing :9000 breaks access
+      if (isLocalTunnelHost && port === "9000") {
+        return `${protocol}//${host}`;
+      }
+      return `${protocol}//${host}:${port}`;
+    }
+
+    if (port) {
+      return port === "80"
+        ? `${protocol}//${host}`
+        : `${protocol}//${host}:${port}`;
+    }
+
+    if (hasExplicitProtocol) {
+      return `${protocol}//${host}`;
+    }
+
+    return `${protocol}//${host}:9000`;
   } catch {
     return null;
   }
