@@ -13,6 +13,21 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const isProduction = mode === "production";
+  const devFrontendHost = process.env.VITE_HOST ?? "localhost";
+  const devFrontendPort = Number.parseInt(process.env.VITE_PORT ?? "9000", 10);
+  const devBackendHost = process.env.DEV_BACKEND_HOST ?? "localhost";
+  const devMasterPort = Number.parseInt(
+    process.env.DEV_MASTER_PORT ?? "3000",
+    10,
+  );
+  const devWorkerBasePort = Number.parseInt(
+    process.env.DEV_WORKER_BASE_PORT ?? "3001",
+    10,
+  );
+  const wsMasterTarget = `ws://${devBackendHost}:${devMasterPort}`;
+  const wsWorkerTarget = (workerIndex: number) =>
+    `ws://${devBackendHost}:${devWorkerBasePort + workerIndex}`;
+  const httpMasterTarget = `http://${devBackendHost}:${devMasterPort}`;
   // In dev, redirect visits to /w*/game/* to "/" so Vite serves the index.html.
   const devGameHtmlBypass = (req?: {
     url?: string;
@@ -82,7 +97,7 @@ export default defineConfig(({ mode }) => {
 
     define: {
       "process.env.WEBSOCKET_URL": JSON.stringify(
-        isProduction ? "" : "localhost:3000",
+        isProduction ? "" : `${devBackendHost}:${devMasterPort}`,
       ),
       "process.env.GAME_ENV": JSON.stringify(isProduction ? "prod" : "dev"),
       "process.env.STRIPE_PUBLISHABLE_KEY": JSON.stringify(
@@ -106,18 +121,19 @@ export default defineConfig(({ mode }) => {
     },
 
     server: {
-      port: 9000,
+      host: devFrontendHost,
+      port: devFrontendPort,
       // Automatically open the browser when the server starts
       open: process.env.SKIP_BROWSER_OPEN !== "true",
       proxy: {
         "/lobbies": {
-          target: "ws://localhost:3000",
+          target: wsMasterTarget,
           ws: true,
           changeOrigin: true,
         },
         // Worker proxies
         "/w0": {
-          target: "ws://localhost:3001",
+          target: wsWorkerTarget(0),
           ws: true,
           secure: false,
           changeOrigin: true,
@@ -125,7 +141,7 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/w0/, ""),
         },
         "/w1": {
-          target: "ws://localhost:3002",
+          target: wsWorkerTarget(1),
           ws: true,
           secure: false,
           changeOrigin: true,
@@ -134,7 +150,7 @@ export default defineConfig(({ mode }) => {
         },
         // API proxies
         "/api": {
-          target: "http://localhost:3000",
+          target: httpMasterTarget,
           changeOrigin: true,
           secure: false,
         },

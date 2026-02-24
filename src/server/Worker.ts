@@ -501,13 +501,24 @@ export async function startWorker() {
 
   // The load balancer will handle routing to this server based on path
   const PORT = config.workerPortByIndex(workerId);
-  server.listen(PORT, () => {
-    log.info(`running on http://localhost:${PORT}`);
-    log.info(`Handling requests with path prefix /w${workerId}/`);
-    // Signal to the master process that this worker is ready
-    lobbyService.sendReady(workerId);
-    log.info(`signaled ready state to master`);
-  });
+  const host = process.env.SERVER_HOST;
+  if (host) {
+    server.listen(PORT, host, () => {
+      log.info(`running on http://${host}:${PORT}`);
+      log.info(`Handling requests with path prefix /w${workerId}/`);
+      // Signal to the master process that this worker is ready
+      lobbyService.sendReady(workerId);
+      log.info(`signaled ready state to master`);
+    });
+  } else {
+    server.listen(PORT, () => {
+      log.info(`running on http://localhost:${PORT}`);
+      log.info(`Handling requests with path prefix /w${workerId}/`);
+      // Signal to the master process that this worker is ready
+      lobbyService.sendReady(workerId);
+      log.info(`signaled ready state to master`);
+    });
+  }
 
   // Global error handler
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

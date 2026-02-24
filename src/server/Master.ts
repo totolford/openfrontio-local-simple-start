@@ -132,9 +132,16 @@ export async function startMaster() {
   });
 
   const PORT = 3000;
-  server.listen(PORT, () => {
-    log.info(`Master HTTP server listening on port ${PORT}`);
-  });
+  const host = process.env.SERVER_HOST;
+  if (host) {
+    server.listen(PORT, host, () => {
+      log.info(`Master HTTP server listening on http://${host}:${PORT}`);
+    });
+  } else {
+    server.listen(PORT, () => {
+      log.info(`Master HTTP server listening on port ${PORT}`);
+    });
+  }
 }
 
 app.get("/api/env", async (req, res) => {

@@ -78,6 +78,20 @@ This will:
 - Launch the game server with development settings
 - Open the game in your default browser (to disable this behavior, set `SKIP_BROWSER_OPEN=true` in your environment)
 
+### LAN Host Mode (play with a friend on your network)
+
+Run this mode on the host player's PC:
+
+```bash
+npm run dev:lan
+```
+
+Then:
+
+- Host opens `http://<host-lan-ip>:9000` (not just localhost)
+- Other player(s) open the same URL from their PC
+- Host creates a private lobby and can set bots in lobby options
+
 ### Client Only
 
 To run just the client with hot reloading:
